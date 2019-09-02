@@ -2,5 +2,6 @@
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="C:/Users/Joy/Google Drive/Essential docs/CSU and Visa Docs/Courses/CS 555 - Distributed System/Assignments/Assignment 1/reed-solomon-erasure-coding.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
