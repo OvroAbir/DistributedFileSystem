@@ -6,15 +6,13 @@ import java.net.Socket;
 
 public class Server 
 {
-	public static String IP_ADDRESS;
-	public static int PORT;
+	public static String IP_ADDRESS = "127.0.0.1"; // TODO Update Server address before running
+	public static int PORT = 5000;
 	private ServerSocket serverSocket;
 	private int serverThreadCounter;
 	
-	public Server(String ipAdress, int port)
+	public Server()
 	{
-		Server.IP_ADDRESS = ipAdress;
-		Server.PORT = port;
 		serverThreadCounter = 0;
 		startServer();
 	}
@@ -24,7 +22,7 @@ public class Server
 		try 
 		{
 			serverSocket = new ServerSocket(Server.PORT);
-			System.out.println("Server opened ServerSocket in port " + Server.PORT);
+			System.out.println("Server opened ServerSocket in port " +  Server.PORT);
 			
 		} 
 		catch (IOException e) 

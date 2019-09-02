@@ -7,16 +7,12 @@ import java.net.Socket;
 
 public class Client 
 {
-	private String serverIpAddress;
-	private int serverPort;
 	private Socket socket;
 	private DataInputStream dataInputStream;
 	private DataOutputStream dataOutputStream;
 	
 	public Client()
 	{
-		serverIpAddress = Server.IP_ADDRESS;
-		serverPort = Server.PORT;
 		startClient();
 	}
 	
@@ -24,7 +20,7 @@ public class Client
 	{
 		try 
 		{
-			socket = new Socket(serverIpAddress, serverPort);
+			socket = new Socket(Server.IP_ADDRESS, Server.PORT);
 			System.out.println("Connected with Server");
 			dataInputStream = new DataInputStream(socket.getInputStream());
 			dataOutputStream = new DataOutputStream(socket.getOutputStream());
