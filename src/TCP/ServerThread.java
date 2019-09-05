@@ -34,33 +34,40 @@ public class ServerThread extends Thread
 	
 	public void run()
 	{
-		System.out.println("Sever Thread started for client " + clientAddress);
-		String inComingMsg, outGoingMsg;
-		
-		try
-		{
-			while(true)
-			{
-				inComingMsg = dataInputStream.readUTF();
-				// TODO Change this read line
-				System.out.println(clientAddress + " : " + inComingMsg);
-				
-				outGoingMsg = "Got your Message";
-				dataOutputStream.writeUTF(outGoingMsg);
-				
-				Thread.sleep(5000);
-			}
-		}
-		catch (IOException | InterruptedException e) {
-			try {
-				socket.close();
-			} catch (IOException e1) 
-			{
-				e1.printStackTrace();
-			}
-			System.out.println("Problem reading data stream for " + clientAddress);
-			e.printStackTrace();
-		}
-		
+		sendFile("source.txt");
+//		System.out.println("Sever Thread started for client " + clientAddress);
+//		String inComingMsg, outGoingMsg;
+//		
+//		try
+//		{
+//			while(true)
+//			{
+//				inComingMsg = dataInputStream.readUTF();
+//				// TODO Change this read line
+//				System.out.println(clientAddress + " : " + inComingMsg);
+//				
+//				outGoingMsg = "Got your Message";
+//				dataOutputStream.writeUTF(outGoingMsg);
+//				
+//				Thread.sleep(5000);
+//			}
+//		}
+//		catch (IOException | InterruptedException e) {
+//			try {
+//				socket.close();
+//			} catch (IOException e1) 
+//			{
+//				e1.printStackTrace();
+//			}
+//			System.out.println("Problem reading data stream for " + clientAddress);
+//			e.printStackTrace();
+//		}
+//		
+	}
+	
+	public void sendFile(String fileName)
+	{
+		UtilityMethods.sendFile(fileName, socket);
+		System.out.println("Finished");
 	}
 }
