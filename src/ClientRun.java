@@ -1,4 +1,4 @@
-import TCP.Client;
+import client.Client;
 
 public class ClientRun {
 

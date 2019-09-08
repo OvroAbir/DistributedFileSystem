@@ -1,12 +1,11 @@
-import TCP.Client;
-import TCP.Server;
+import control_node.ControlNode;
 
 public class ServerRun {
 
 	public static void main(String[] args) throws InterruptedException 
 	{
 		System.out.println("Starting server");
-		Server server = new Server();
+		ControlNode controlNode = new ControlNode();
 		
 	}
 
