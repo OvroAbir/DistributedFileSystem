@@ -5,6 +5,7 @@ import java.io.Serializable;
 public class MessageType implements Serializable
 {
 	private int messageType;
+	private String messageFrom;
 	
 	public static int MINOR_HEARTBEAT_CS_CN = 1;
 	public static int MAJOR_HEARTBEAT_CS_CN = 2;
@@ -14,9 +15,10 @@ public class MessageType implements Serializable
 	public static int ERROR_MESSAGE = 6;
 	
 	
-	public MessageType(int messageType) 
+	public MessageType(int messageType, String messageFrom) 
 	{
 		this.messageType = messageType;
+		this.messageFrom = messageFrom;
 	}
 	
 	public int getMessageType() 
@@ -32,4 +34,14 @@ public class MessageType implements Serializable
 	{
 		return "MessageType : " + Integer.toString(messageType);
 	}
+
+	public String getMessageFrom() {
+		return messageFrom;
+	}
+
+	public void setMessageFrom(String messageFrom) {
+		this.messageFrom = messageFrom;
+	}
+	
+	
 }

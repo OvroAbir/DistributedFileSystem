@@ -32,7 +32,6 @@ public class ControlNode
 	}
 	
 	
-	
 	private void startControlNode()
 	{
 		try 

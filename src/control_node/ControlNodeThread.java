@@ -88,12 +88,24 @@ public class ControlNodeThread extends Thread
 	{
 		if(msg.getMessageType() == MessageType.UPLOAD_FILE_REQ_CL_CN)
 		{
+			System.out.println("Received file upload request from client " + msg.getMessageFrom());
 			MessageType chunkServerList = findFreeChunkServers(((FileUploadRequest_CL_CN) msg).getFileSize());
 			sendMessage(chunkServerList);
 		}
+		else if(msg.getMessageType() == MessageType.MAJOR_HEARTBEAT_CS_CN)
+		{
+			System.out.println("Received Major heartbeat from " + msg.getMessageFrom());
+			// TODO Process the message
+		}
+		else if(msg.getMessageType() == MessageType.MINOR_HEARTBEAT_CS_CN)
+		{
+			System.out.println("Received Minor heartbeat from " + msg.getMessageFrom());
+			// TODO Process the message
+		}
 		else
 		{
-			System.out.println("Could not understand the rcvd messsage");
+			System.out.println("Could not understand the received messsage from " + msg.getMessageFrom()
+			+ "." + msg);
 		}
 	}
 	
@@ -104,7 +116,7 @@ public class ControlNodeThread extends Thread
 		{
 			String s = "File size can not be negative";
 			System.out.println(s);
-			return new ErrorMessage(s);
+			return new ErrorMessage(s, ControlNode.IP_ADDRESS);
 		}
 		int numberOfChunks = calculateNumberOfChunks(fileSize);
 		FreeChunkServerList chunkServerList = getFreeChunkServerList(numberOfChunks);
@@ -113,7 +125,7 @@ public class ControlNodeThread extends Thread
 	
 	private FreeChunkServerList getFreeChunkServerList(int numberOfChunks)
 	{
-		FreeChunkServerList chunkServerList = new FreeChunkServerList(numberOfChunks);
+		FreeChunkServerList chunkServerList = new FreeChunkServerList(numberOfChunks, ControlNode.IP_ADDRESS);
 		chunkServerList.setFreeServers(chunkServerInfos);
 		return chunkServerList;
 	}

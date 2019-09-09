@@ -15,14 +15,16 @@ import messages.MessageType;
 
 public class Client 
 {
+	private String ipAddress;
 	private Socket socketWithControlNode;
 	private DataInputStream dataInputStreamWithControlNode;
 	private DataOutputStream dataOutputStreamWithControlNode;
 	private ObjectOutputStream objectOutputStreamWithControlNode;
 	private ObjectInputStream objectInputStreamWithControlNode;
 	
-	public Client()
+	public Client(String ipAddress)
 	{
+		this.ipAddress = ipAddress;
 		try {
 			socketWithControlNode = new Socket(ControlNode.IP_ADDRESS, ControlNode.PORT);
 			System.out.println("Connected with Control node.");
@@ -32,6 +34,11 @@ public class Client
 			e.printStackTrace();
 		}
 		startClient();
+	}
+	
+	public Client()
+	{
+		this("not provided");
 	}
 	
 	public void startClient()
@@ -48,13 +55,19 @@ public class Client
 			while(true)
 			{
 				// TODO Will need to change
-				outGoingMsg = new FileUploadRequest_CL_CN(800);
+				outGoingMsg = new FileUploadRequest_CL_CN(800, ipAddress);
 				objectOutputStreamWithControlNode.writeObject(outGoingMsg);
 				
 				inComingMsg = (MessageType) objectInputStreamWithControlNode.readObject();
 				System.out.println("Server : " + inComingMsg);
 				resolveReceivedMessage(inComingMsg);
 				
+				try {
+					Thread.sleep(10000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		} 
 		catch (IOException e) 
@@ -72,11 +85,11 @@ public class Client
 		if(msg.getMessageType() == MessageType.FREE_CHUNK_SERVER_LIST_CN_CL)
 		{
 			// TODO Complete this block
-			System.out.println("Got free Chunk Server list");
+			System.out.println("Got free Chunk Server list from " + msg.getMessageFrom());
 		}
 		else
 		{
-			System.out.println("Can not resolve received Message.");
+			System.out.println("Can not resolve received Message " + msg.getMessageFrom());
 		}
 	}
 }

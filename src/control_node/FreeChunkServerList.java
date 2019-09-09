@@ -12,9 +12,9 @@ public class FreeChunkServerList extends MessageType
 	private int numberOfChunks;
 	private ArrayList<String>[] chunkServerList;
 
-	public FreeChunkServerList(int numberOfChunks)
+	public FreeChunkServerList(int numberOfChunks, String messageFrom)
 	{
-		super(MessageType.FREE_CHUNK_SERVER_LIST_CN_CL);
+		super(MessageType.FREE_CHUNK_SERVER_LIST_CN_CL, messageFrom);
 		this.numberOfChunks = numberOfChunks;
 		chunkServerList = new ArrayList[numberOfChunks];
 		for(int i=0;i<numberOfChunks;i++)

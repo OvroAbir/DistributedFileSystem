@@ -4,9 +4,9 @@ public class FileUploadRequest_CL_CN extends MessageType
 {
 	private int fileSize;
 	
-	public FileUploadRequest_CL_CN(int fileSize) 
+	public FileUploadRequest_CL_CN(int fileSize, String messageFrom) 
 	{
-		super(UPLOAD_FILE_REQ_CL_CN);
+		super(UPLOAD_FILE_REQ_CL_CN, messageFrom);
 		this.fileSize = fileSize;
 	}
 
