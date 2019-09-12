@@ -5,11 +5,15 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 
+import TCP.Server;
+import TCP.ServerThread;
 import control_node.ControlNode;
 import messages.HeartBeat;
 import messages.MajorHeartBeat;
@@ -21,6 +25,7 @@ public class ChunkServer
 	public static int MINOR_HEART_BEAT_INTERVAL = 30000;
 	public static int MAJOR_HEART_BEAT_INTERVAL = 300000;
 	
+	public static int CHUNK_SERVER_SERVER_SOCKET_PORT = 5050;
 	
 	private String ipAddress;
 	private int freeSpace; // in bytes
@@ -28,7 +33,7 @@ public class ChunkServer
 	private ArrayList<Chunk> allChunks;
 	private ArrayList<Chunk> newlyAddedChunks;
 	private ArrayList<String> corruptedChunkNames;
-	// TODO will need to create a map from name to chunk
+	protected ConcurrentHashMap<String, Chunk> hashMapForFile;
 	// TODO will need to add files to corrupted list
 	
 	
@@ -38,11 +43,15 @@ public class ChunkServer
 	private ObjectInputStream objectInputStreamWithControlNode;
 	private ObjectOutputStream objectOutputStreamWithControlNode;
 	
+	private ServerSocket serverSocketWithClients;
+	private int chunkServerThreadCounter;
 	
 	public ChunkServer(String ipAddress, int freeSpace) 
 	{
 		this.ipAddress = ipAddress;
 		this.freeSpace = freeSpace;
+		
+		chunkServerThreadCounter = 0;
 		
 		allChunks = new ArrayList<Chunk>();
 		newlyAddedChunks = new ArrayList<Chunk>();
@@ -64,8 +73,42 @@ public class ChunkServer
 		}
 		
 		startHeartBeatTimer();
+		openConnectionWithClients();
 	}
 	
+	private void openConnectionWithClients()
+	{
+		try 
+		{
+			serverSocketWithClients = new ServerSocket(CHUNK_SERVER_SERVER_SOCKET_PORT);
+			System.out.println("Chunk Server " + ipAddress + " opened ServerSocketForLients in port " +  CHUNK_SERVER_SERVER_SOCKET_PORT);
+			
+		} 
+		catch (IOException e) 
+		{
+			System.out.println("Can not create ChunkServersocket for Clients.");
+			e.printStackTrace();
+		}
+		
+		while(true)
+		{
+			try 
+			{
+				Socket socketForClients = serverSocketWithClients.accept();
+				System.out.println("ChunkServer accepted a connection");
+				ChunkServerThreadForClients serverThreadForClients = new ChunkServerThreadForClients(socketForClients, ipAddress,
+						++chunkServerThreadCounter, this);
+				serverThreadForClients.start();
+			}
+			catch (IOException e) 
+			{
+				System.out.println("Tried to accept connection from client. But failed.");
+				e.printStackTrace();
+			}
+			
+		}
+		
+	}
 	
 	private void startHeartBeatTimer()
 	{
@@ -121,5 +164,8 @@ public class ChunkServer
 		return minorHeartBeat;
 	}
 	
-	
+	protected ConcurrentHashMap<String, Chunk> getConcurrentHashMapForFiles()
+	{
+		return hashMapForFile;
+	}
 }

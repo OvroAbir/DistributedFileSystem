@@ -6,14 +6,16 @@ public class MessageType implements Serializable
 {
 	private int messageType;
 	private String messageFrom;
+	private static int messageTypeCounter = 0;
 	
-	public static int MINOR_HEARTBEAT_CS_CN = 1;
-	public static int MAJOR_HEARTBEAT_CS_CN = 2;
-	public static int HEARTBEAT_CS_CN = 3;
-	public static int UPLOAD_FILE_REQ_CL_CN = 4;
-	public static int FREE_CHUNK_SERVER_LIST_CN_CL = 5;
-	public static int ERROR_MESSAGE = 6;
-	
+	public static int MINOR_HEARTBEAT_CS_CN = ++messageTypeCounter;
+	public static int MAJOR_HEARTBEAT_CS_CN = ++messageTypeCounter;
+	public static int HEARTBEAT_CS_CN = ++messageTypeCounter;
+	public static int UPLOAD_FILE_REQ_CL_CN = ++messageTypeCounter;
+	public static int UPLOAD_FILE_CL_CS = ++messageTypeCounter;
+	public static int FREE_CHUNK_SERVER_LIST_CN_CL = ++messageTypeCounter;
+	public static int ERROR_MESSAGE = ++messageTypeCounter;
+	public static int SUCCESS_MESSAGE = ++messageTypeCounter;
 	
 	public MessageType(int messageType, String messageFrom) 
 	{

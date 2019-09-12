@@ -3,10 +3,11 @@ package chunk_server;
 public class Chunk 
 {
 	private ChunkMetadata chunkMetadata;
+	private byte[] realData;
 	
-	public Chunk() 
+	public Chunk(String chunkName) 
 	{
-		chunkMetadata = new ChunkMetadata();
+		chunkMetadata = new ChunkMetadata(chunkName);
 	}
 
 	public ChunkMetadata getChunkMetadata() {
