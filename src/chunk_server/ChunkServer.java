@@ -25,7 +25,9 @@ public class ChunkServer
 	public static int MINOR_HEART_BEAT_INTERVAL = 30000;
 	public static int MAJOR_HEART_BEAT_INTERVAL = 300000;
 	
-	public static int CHUNK_SERVER_SERVER_SOCKET_PORT = 5050;
+	public static int CHUNK_SERVER_SOCKET_PORT_FOR_CLIENTS = 5050;
+	
+	public static String chunkNameSeperator = "_chunk";
 	
 	private String ipAddress;
 	private int freeSpace; // in bytes
@@ -80,8 +82,8 @@ public class ChunkServer
 	{
 		try 
 		{
-			serverSocketWithClients = new ServerSocket(CHUNK_SERVER_SERVER_SOCKET_PORT);
-			System.out.println("Chunk Server " + ipAddress + " opened ServerSocketForLients in port " +  CHUNK_SERVER_SERVER_SOCKET_PORT);
+			serverSocketWithClients = new ServerSocket(CHUNK_SERVER_SOCKET_PORT_FOR_CLIENTS);
+			System.out.println("Chunk Server " + ipAddress + " opened ServerSocketForLients in port " +  CHUNK_SERVER_SOCKET_PORT_FOR_CLIENTS);
 			
 		} 
 		catch (IOException e) 

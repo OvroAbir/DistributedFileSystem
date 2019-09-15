@@ -15,6 +15,7 @@ public class FileStoreAndRetrieveHandler
 	
 	public boolean storeFileChunk(Chunk chunk)
 	{
-		
+		// TODO complete this
+		return false;
 	}
 }

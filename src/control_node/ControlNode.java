@@ -11,7 +11,7 @@ import TCP.ServerThread;
 
 public class ControlNode
 {
-	public static int CHUNK_SIZE_BYTES = 8 * 1024; // TODO May need to change this
+	public static int CHUNK_SIZE_BYTES = 64 * 1024; // TODO May need to change this
 	public static int REPLICATION_LEVEL = 3;
 	protected static ArrayList<ChunkServerInfo> chunkServerInfos;
 	

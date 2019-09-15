@@ -10,6 +10,7 @@ import java.util.ArrayList;
 
 import messages.ErrorMessage;
 import messages.FileUploadRequest_CL_CN;
+import messages.FreeChunkServerList;
 import messages.MessageType;
 
 public class ControlNodeThread extends Thread
@@ -125,8 +126,7 @@ public class ControlNodeThread extends Thread
 	
 	private FreeChunkServerList getFreeChunkServerList(int numberOfChunks)
 	{
-		FreeChunkServerList chunkServerList = new FreeChunkServerList(numberOfChunks, ControlNode.IP_ADDRESS);
-		chunkServerList.setFreeServers(chunkServerInfos);
+		FreeChunkServerList chunkServerList = new FreeChunkServerList(ControlNode.IP_ADDRESS, chunkServerInfos);
 		return chunkServerList;
 	}
 	

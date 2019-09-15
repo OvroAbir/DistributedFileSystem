@@ -1,16 +1,42 @@
 package chunk_server;
 
+import java.util.ArrayList;
+
 public class ChunkMetadata 
 {
-	private boolean isCorrupted;
-	private String chunkFileName;
-	private int realDatalength;
-	private byte[] hashValue;
+	private String mainFileName;
+	private int realDatalength, chunkIndex, version;
+	private ArrayList<String> sha1Values;
 	
-	public ChunkMetadata(String chunkFileName) 
+	// TODO do version work
+		
+	public ChunkMetadata(String mainFileName, int index, ArrayList<String> sha1Values, int realDataLength) 
 	{
-		this.chunkFileName = chunkFileName;
+		this.mainFileName = mainFileName;
+		this.chunkIndex = index;
+		this.sha1Values = sha1Values;
+		this.realDatalength = realDataLength;
+	}
+
+	public ArrayList<String> getSha1Values() {
+		return sha1Values;
+	}
+
+	public void setSha1Values(ArrayList<String> sha1Values) {
+		this.sha1Values = sha1Values;
+	}
+
+	public String getMainFileName() {
+		return mainFileName;
+	}
+
+	public int getRealDatalength() {
+		return realDatalength;
+	}
+
+	public int getChunkIndex() {
+		return chunkIndex;
 	}
 	
-	public computeAndStoreHash()
+	
 }
