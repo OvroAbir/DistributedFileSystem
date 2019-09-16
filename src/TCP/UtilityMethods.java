@@ -15,7 +15,7 @@ public class UtilityMethods
 	
 	public static void sendFile(String fileName, final Socket socket)
 	{
-		System.out.println("Sending file " + fileName + " to " + socket.getInetAddress());
+		System.out.println("Sending file " + fileName + " to " + socket.getInetAddress().getHostAddress());
 		
 		File file = new File(fileName);
 		byte[] fileBytes = new byte[FILE_ONE_TRANSFER_BYTE_LEN];

@@ -2,6 +2,7 @@ package chunk_server;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -31,7 +32,7 @@ public class ChunkServerThreadForClients extends Thread
 	{
 		socketForClients = s;
 		this.threadId = threadId;
-		clientAddress = s.getInetAddress().toString();
+		clientAddress = s.getInetAddress().getHostAddress();
 		chunkServerIpAddress = ipAddress;
 		this.chunkServerInstance = chunkServerInstance;
 		fileHandler = new FileStoreAndRetrieveHandler(chunkServerInstance);
@@ -53,9 +54,8 @@ public class ChunkServerThreadForClients extends Thread
 	
 	private boolean storeFileChunk(FileUpload_CL_CS fileObject)
 	{
-		// TODO add this file to newly added and whole list
+		chunkServerInstance.reduceFreeSpace(fileObject.getFileChunk().getTotalLength());
 		return fileHandler.storeFileChunk(fileObject.getFileChunk());
-		
 	}
 	
 	private void forwardToOtherChunkServers(FileUpload_CL_CS fileObject)
@@ -79,24 +79,48 @@ public class ChunkServerThreadForClients extends Thread
 		else
 		{
 			System.out.println("Could not understand the message from " + clientAddress);
-			return new ErrorMessage("Could nt understand the type of message", chunkServerIpAddress);
+			return new ErrorMessage("Could not understand the type of message", chunkServerIpAddress);
 		}
 	}
 	
 	
 	public void run()
 	{
-		MessageType inComingMsg;
+		MessageType inComingMsg, responseMsg;
+
 		while(true)
 		{
 			try {
 				inComingMsg = (MessageType) objectInputStreamClients.readObject();
+				responseMsg = processReceivedMessage(inComingMsg);
+				
 				// TODO handle what to do with this message
+			}
+			catch (EOFException e) 
+			{
+				terminateConnection();
+				return;
 			}
 			catch (IOException | ClassNotFoundException e) {
 				System.out.println("Could not receieve message");
 				e.printStackTrace();
 			}
 		}
+	}
+
+	private void terminateConnection() {
+		System.out.println("Connection is being terminated with client " + clientAddress);
+		try {
+			objectInputStreamClients.close();
+			objectOutputStreamClients.close();
+			dataInputStream.close();
+			dataOutputStream.close();
+			socketForClients.close();
+		} catch (IOException e) {
+			System.out.println("Exception while closing connection with client.");
+			e.printStackTrace();
+		}
+		
+		
 	}
 }

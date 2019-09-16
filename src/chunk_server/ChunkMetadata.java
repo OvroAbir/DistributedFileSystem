@@ -1,8 +1,9 @@
 package chunk_server;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class ChunkMetadata 
+public class ChunkMetadata implements Serializable
 {
 	private String mainFileName;
 	private int realDatalength, chunkIndex, version;
@@ -38,5 +39,8 @@ public class ChunkMetadata
 		return chunkIndex;
 	}
 	
-	
+	public String getChunkFileName()
+	{
+		return getMainFileName() + ChunkServer.chunkNameSeperator + getChunkIndex();
+	}
 }

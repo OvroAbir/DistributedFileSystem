@@ -54,7 +54,7 @@ public class Client
 	
 	public Client()
 	{
-		this("not provided");
+		this(" [client address not provided]");
 	}
 	
 	private void whatUserWantToDo()
@@ -63,7 +63,8 @@ public class Client
 		System.out.println("Enter " + WANT_TO_UPLOAD_FILE + " to upload a file. "
 				+ "Or enter " + WANT_TO_DOWNLOAD_FILE + " to download a file.");
 		Scanner scanner = new Scanner(System.in);
-		currentChoice = scanner.nextInt();
+		currentChoice = Integer.parseInt(scanner.nextLine());
+		
 		
 		if(currentChoice != WANT_TO_DOWNLOAD_FILE && currentChoice != WANT_TO_UPLOAD_FILE)
 		{
@@ -72,12 +73,12 @@ public class Client
 			return;
 		}
 		
-		System.out.println("Enter the file name ");
+		System.out.print("Enter the file name : ");
 		currentFullFileName = scanner.nextLine();
 		
 		if(currentChoice == WANT_TO_UPLOAD_FILE)
 		{
-			System.out.println("Enter the path to the file ");
+			System.out.print("Enter the path to the file : ");
 			currentFullFilePath = scanner.nextLine();
 			
 			File file = new File(currentFullFilePath);

@@ -6,10 +6,11 @@ public class HeartBeat extends MessageType
 	private int totalNumberOfChunks;
 	private int freeSpace;
 	
-	public HeartBeat(int heartBeatType, String messageFrom) 
+	public HeartBeat(int heartBeatType, String messageFrom, int freeSpace) 
 	{
 		super(heartBeatType, messageFrom);
 		this.heartBeatType = heartBeatType;
+		this.freeSpace = freeSpace;
 	}
 
 	public int getHeartBeatType() {

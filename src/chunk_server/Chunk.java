@@ -6,17 +6,20 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
-public class Chunk 
+import exceptions.FileDataChanged;
+
+public class Chunk implements Serializable
 {
 	private ChunkMetadata chunkMetadata;
 	private int totalLength;
 	private String realContent;
 	private String storedFileName;
-	private boolean isDataOnDisk;
+	private boolean isDataInMemory;
 	
 	public static int SHA1_INPUT_LEN = 8 * 1024;
 	
@@ -26,7 +29,7 @@ public class Chunk
 		
 		ArrayList<String> sha1Values = calculateWholeSHA1(realContent);
 		chunkMetadata = new ChunkMetadata(mainFileName, index, sha1Values, realContent.length());
-		this.isDataOnDisk = false;
+		this.isDataInMemory = true;
 	}
 
 	public ChunkMetadata getChunkMetadata() {
@@ -39,8 +42,7 @@ public class Chunk
 	
 	public String storeRealDataInDisk(String folderName)
 	{
-		storedFileName = folderName + File.separator + chunkMetadata.getMainFileName() + ChunkServer.chunkNameSeperator
-				+ chunkMetadata.getChunkIndex();
+		storedFileName = folderName + File.separator + chunkMetadata.getChunkFileName();
 		PrintWriter pw = null;
 		try {
 			pw = new PrintWriter(new File(storedFileName));
@@ -51,10 +53,41 @@ public class Chunk
 		}
 		pw.close();
 		
-		isDataOnDisk = true;
+		isDataInMemory = false;
 		realContent = null;
 		
 		return storedFileName;
+	}
+	
+	private boolean isFileDataUnChanged(String content)
+	{
+		ArrayList<String> newSha1Values = calculateWholeSHA1(content);
+		ArrayList<String> oldSha1Values = chunkMetadata.getSha1Values();
+		
+		if(content.length() != chunkMetadata.getRealDatalength() || newSha1Values == null || oldSha1Values == null || 
+				newSha1Values.size() != oldSha1Values.size())
+			return false;
+		
+		for(int i=0;i<oldSha1Values.size();i++)
+		{
+			String oldS = oldSha1Values.get(i);
+			String newS = newSha1Values.get(i);
+			
+			if(oldS.equals(newS) == false)
+				return false;
+		}
+		
+		return true;
+	}
+	
+	public void retrieveRealDataFromDisk(String folderName) throws FileDataChanged
+	{
+		String fullFilePath = folderName + File.separator + storedFileName;
+		String content = readFile(fullFilePath);
+		if(isFileDataUnChanged(content) == false)
+			throw new FileDataChanged();
+		realContent = content;
+		isDataInMemory = true;
 	}
 	
 	private ArrayList<String> calculateWholeSHA1(String fileContent)
@@ -107,4 +140,8 @@ public class Chunk
 		return stringBuilder.toString();
 	}
 	
+	public int getTotalLength()
+	{
+		return totalLength;
+	}
 }

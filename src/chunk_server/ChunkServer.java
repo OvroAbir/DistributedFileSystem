@@ -28,6 +28,7 @@ public class ChunkServer
 	public static int CHUNK_SERVER_SOCKET_PORT_FOR_CLIENTS = 5050;
 	
 	public static String chunkNameSeperator = "_chunk";
+	public static String FILE_STORAGE_FOLDER_LOCATION = "C:\\TempProjectData";
 	
 	private String ipAddress;
 	private int freeSpace; // in bytes
@@ -58,6 +59,7 @@ public class ChunkServer
 		allChunks = new ArrayList<Chunk>();
 		newlyAddedChunks = new ArrayList<Chunk>();
 		corruptedChunkNames = new ArrayList<String>();
+		hashMapForFile = new ConcurrentHashMap<String, Chunk>();
 		
 		try {
 			socketWithControlNode = new Socket(ControlNode.IP_ADDRESS, ControlNode.PORT);
@@ -128,6 +130,7 @@ public class ChunkServer
 	{
 		try {
 			objectOutputStreamWithControlNode.writeObject(msg);
+			objectOutputStreamWithControlNode.flush();
 		} catch (IOException e) {
 			System.out.println("Can not send message to control node.");
 			e.printStackTrace();
@@ -154,14 +157,14 @@ public class ChunkServer
 	
 	protected MajorHeartBeat getUpdatedMajorHeartBeat()
 	{
-		MajorHeartBeat majorHeartBeat = new MajorHeartBeat(ipAddress);
+		MajorHeartBeat majorHeartBeat = new MajorHeartBeat(ipAddress, freeSpace);
 		majorHeartBeat.updateHeartBeatData(extractMetadataFromChunks(allChunks));
 		return majorHeartBeat;
 	}
 	
 	protected MinorHeartBeat getUpdatedMinorHeartBeat()
 	{
-		MinorHeartBeat minorHeartBeat = new MinorHeartBeat(ipAddress);
+		MinorHeartBeat minorHeartBeat = new MinorHeartBeat(ipAddress, freeSpace);
 		minorHeartBeat.updateHeartBeatData(extractMetadataFromChunks(newlyAddedChunks), corruptedChunkNames);
 		return minorHeartBeat;
 	}
@@ -169,5 +172,19 @@ public class ChunkServer
 	protected ConcurrentHashMap<String, Chunk> getConcurrentHashMapForFiles()
 	{
 		return hashMapForFile;
+	}
+
+	protected ArrayList<Chunk> getAllChunks() {
+		return allChunks;
+	}
+
+	protected ArrayList<Chunk> getNewlyAddedChunks() {
+		return newlyAddedChunks;
+	}
+	
+	protected void reduceFreeSpace(int amount)
+	{
+		freeSpace -= amount;
+		freeSpace = Math.max(0, freeSpace);
 	}
 }

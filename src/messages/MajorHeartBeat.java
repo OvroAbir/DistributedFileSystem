@@ -9,9 +9,9 @@ public class MajorHeartBeat extends HeartBeat
 {
 	private ArrayList<ChunkMetadata> allChunkMetaDatas;
 	
-	public MajorHeartBeat(String messageFrom) 
+	public MajorHeartBeat(String messageFrom, int freeSpace) 
 	{
-		super(MAJOR_HEARTBEAT_CS_CN, messageFrom);
+		super(MAJOR_HEARTBEAT_CS_CN, messageFrom, freeSpace);
 		allChunkMetaDatas = new ArrayList<ChunkMetadata>();
 	}
 
@@ -26,6 +26,7 @@ public class MajorHeartBeat extends HeartBeat
 	
 	public void updateHeartBeatData(ArrayList<ChunkMetadata> chunkMetadatas)
 	{
+		// TODO add corrpted files
 		allChunkMetaDatas.clear();
 		allChunkMetaDatas.addAll(chunkMetadatas);
 		

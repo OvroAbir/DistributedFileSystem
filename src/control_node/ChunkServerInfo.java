@@ -1,5 +1,6 @@
 package control_node;
 
+import java.util.HashMap;
 
 public class ChunkServerInfo 
 {

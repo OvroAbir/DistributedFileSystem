@@ -26,6 +26,7 @@ public class FreeChunkServerList extends MessageType
 
 	private void setFreeServers(ArrayList<ChunkServerInfo> serverInfos)
 	{
+		System.out.println("came here. free chunk server list");
 		PriorityQueue<ChunkServerInfo> pq = new PriorityQueue<ChunkServerInfo>(
 				new Comparator<ChunkServerInfo>() 
 				{
@@ -59,7 +60,7 @@ public class FreeChunkServerList extends MessageType
 		}
 		
 		if(count != ControlNode.REPLICATION_LEVEL)
-			System.out.println("Only " + count + " replicas are possible to write.");
+			System.out.println("Only " + count + " replicas were possible to save in chunk server.");
 	
 	}
 

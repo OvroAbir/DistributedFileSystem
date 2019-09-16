@@ -7,11 +7,16 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 
+import chunk_server.ChunkMetadata;
 import messages.ErrorMessage;
 import messages.FileUploadRequest_CL_CN;
 import messages.FreeChunkServerList;
+import messages.HeartBeat;
+import messages.MajorHeartBeat;
 import messages.MessageType;
+import messages.MinorHeartBeat;
 
 public class ControlNodeThread extends Thread
 {
@@ -23,13 +28,15 @@ public class ControlNodeThread extends Thread
 	private String clientAddress;
 	private int threadId;
 	private ArrayList<ChunkServerInfo> chunkServerInfos;
+	private HashMap<String, ArrayList<String>> chunkStorageInfo;
 	
 	public ControlNodeThread(Socket s, int threadId)
 	{
 		socket = s;
 		this.threadId = threadId;
-		clientAddress = s.getInetAddress().toString() + " (" + this.threadId + ") ";
+		clientAddress = s.getInetAddress().getHostAddress() + " (" + this.threadId + ") ";
 		chunkServerInfos = ControlNode.chunkServerInfos;
+		chunkStorageInfo = ControlNode.chunkStorageInfo;
 		
 		try 
 		{
@@ -79,9 +86,80 @@ public class ControlNodeThread extends Thread
 	{
 		try {
 			objectOutputStream.writeObject(msg);
+			objectOutputStream.flush();
 		} catch (IOException e) {
 			System.out.println("Can not send message.");
 			e.printStackTrace();
+		}
+	}
+	
+	
+	private String extractIpAddressFromClientAddress(String address)
+	{
+		address = address.substring(0, address.indexOf(' '));
+		return address;
+	}
+	
+	private int findChunkServerInfoIndex(String address)
+	{
+		address = extractIpAddressFromClientAddress(address);
+		int i=0;
+		for(ChunkServerInfo csi : chunkServerInfos)
+		{
+			if(csi.getIp_adress().equals(address))
+				return i;
+			i++;
+		}
+		
+		return -1;
+	}
+	
+	private void updateChunkServerInfos(MessageType msg)
+	{
+		HeartBeat hb = (HeartBeat) msg;
+		int index = findChunkServerInfoIndex(clientAddress);
+		if(index == -1)
+		{
+			ChunkServerInfo csi = new ChunkServerInfo(extractIpAddressFromClientAddress(clientAddress),
+					hb.getFreeSpace());
+			chunkServerInfos.add(csi);
+		}
+		else
+		{
+			chunkServerInfos.get(index).setFreeSpace(hb.getFreeSpace());
+		}
+	}
+	
+	private void addChunkInfosToChunkStorage(ArrayList<ChunkMetadata> chunkDatas)
+	{
+		String ipaddress = extractIpAddressFromClientAddress(clientAddress);
+		
+		for(ChunkMetadata chunkMetadata : chunkDatas)
+		{
+			String chunkName = chunkMetadata.getChunkFileName();
+			if(chunkStorageInfo.containsKey(chunkName) == false)
+			{
+				ArrayList<String> addresses = new ArrayList<String>();
+				addresses.add(ipaddress);
+				
+				chunkStorageInfo.put(chunkName, addresses);
+			}
+			else if(chunkStorageInfo.get(chunkName).contains(ipaddress) == false)
+					chunkStorageInfo.get(chunkName).add(ipaddress);
+		}
+	}
+	
+	private void updateChunkStorageInformation(MessageType msg) 
+	{
+		if(msg instanceof MajorHeartBeat)
+		{
+			ArrayList<ChunkMetadata> allChunkMetadatas = ((MajorHeartBeat) msg).getAllChunkMetaDatas();
+			addChunkInfosToChunkStorage(allChunkMetadatas);
+		}
+		else if(msg instanceof MinorHeartBeat)
+		{
+			ArrayList<ChunkMetadata> newChunkMetadatas = ((MinorHeartBeat) msg).getNewlyAddedChunkNames();
+			addChunkInfosToChunkStorage(newChunkMetadatas);
 		}
 	}
 	
@@ -96,11 +174,15 @@ public class ControlNodeThread extends Thread
 		else if(msg.getMessageType() == MessageType.MAJOR_HEARTBEAT_CS_CN)
 		{
 			System.out.println("Received Major heartbeat from " + msg.getMessageFrom());
+			updateChunkServerInfos(msg);
+			updateChunkStorageInformation(msg);
 			// TODO Process the message
 		}
 		else if(msg.getMessageType() == MessageType.MINOR_HEARTBEAT_CS_CN)
 		{
 			System.out.println("Received Minor heartbeat from " + msg.getMessageFrom());
+			updateChunkServerInfos(msg);
+			updateChunkStorageInformation(msg);
 			// TODO Process the message
 		}
 		else

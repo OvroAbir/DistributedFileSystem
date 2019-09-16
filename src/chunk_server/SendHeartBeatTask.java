@@ -25,6 +25,7 @@ public class SendHeartBeatTask extends TimerTask
 			System.out.println("Sending Major Heartbeat to Control Node.");
 			MajorHeartBeat majorHeartBeat = chunkServer.getUpdatedMajorHeartBeat();
 			chunkServer.sendHeartBeat(majorHeartBeat);
+			chunkServer.clearNewlyAddedChunks();
 			time = ChunkServer.MINOR_HEART_BEAT_INTERVAL;
 		}
 		else

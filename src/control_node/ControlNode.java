@@ -5,6 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 
 import TCP.Server;
 import TCP.ServerThread;
@@ -14,6 +15,8 @@ public class ControlNode
 	public static int CHUNK_SIZE_BYTES = 64 * 1024; // TODO May need to change this
 	public static int REPLICATION_LEVEL = 3;
 	protected static ArrayList<ChunkServerInfo> chunkServerInfos;
+	protected static HashMap<String, ArrayList<String>> chunkStorageInfo; // chunkname to ipadress
+	// TODO store chunk storage info
 	
 	
 	public static String IP_ADDRESS = "127.0.0.1"; // TODO Update Server address before running
@@ -26,6 +29,7 @@ public class ControlNode
 	{
 		// TODO Try to make this thread safe
 		chunkServerInfos = new ArrayList<ChunkServerInfo>();
+		chunkStorageInfo = new HashMap<String, ArrayList<String>>();
 		
 		serverThreadCounter = 0;
 		startControlNode();
@@ -37,7 +41,7 @@ public class ControlNode
 		try 
 		{
 			serverSocket = new ServerSocket(Server.PORT);
-			System.out.println("Server opened ServerSocket in port " +  Server.PORT);
+			System.out.println("Control node opened ServerSocket in port " +  Server.PORT);
 			
 		} 
 		catch (IOException e) 

@@ -9,9 +9,9 @@ public class MinorHeartBeat extends HeartBeat
 	private ArrayList<ChunkMetadata> newlyAddedChunkMetadatas;
 	private ArrayList<String> corruptedChunkNames;
 	
-	public MinorHeartBeat(String messageFrom) 
+	public MinorHeartBeat(String messageFrom, int freeSpace) 
 	{
-		super(MINOR_HEARTBEAT_CS_CN, messageFrom);
+		super(MINOR_HEARTBEAT_CS_CN, messageFrom, freeSpace);
 		newlyAddedChunkMetadatas = new ArrayList<ChunkMetadata>();
 		corruptedChunkNames = new ArrayList<String>();
 	}
