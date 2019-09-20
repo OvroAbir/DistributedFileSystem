@@ -128,7 +128,7 @@ public class ChunkServerThreadForClients extends Thread
 				
 				objectOutputStreamClients.writeObject(responseMsg);
 				objectOutputStreamClients.flush();
-				Thread.sleep(50);
+				Thread.sleep(100);
 				// TODO handle what to do with this message
 			}
 			catch (Exception  e) { // TODO EOFException?

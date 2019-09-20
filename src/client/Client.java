@@ -243,7 +243,6 @@ public class Client
 		String filePath = currentFullFilePath;
 		File file = new File(filePath);
 		
-		StringBuilder stringBuilder = new StringBuilder();
 		BufferedReader br;
 		boolean errorOccured = false;
 		
@@ -253,42 +252,53 @@ public class Client
 			int chunkIndex = 0;
 			MessageType msgType;
 			
-			while ((tempStr = br.readLine()) != null) // TODO change if there is no new line 
+			StringBuilder tempStringBuilder;
+			int result = 1, charRead;
+			char ch;
+			
+			while (result != -1) // TODO change if there is no new line 
 			{
-				stringBuilder.append(tempStr);
-				if(stringBuilder.length() >= ControlNode.CHUNK_SIZE_BYTES)
+				tempStringBuilder = new StringBuilder();
+				charRead = 0;
+
+				while(charRead < ControlNode.CHUNK_SIZE_BYTES)
 				{
-					content = stringBuilder.toString().substring(0, ControlNode.CHUNK_SIZE_BYTES);
-					
-					FileUploadRequest_CL_CN fileUploadReqMsg = new FileUploadRequest_CL_CN(content.length(),
-							ipAddress);
-					sendMessageToControllerNode(fileUploadReqMsg);
-					
-					msgType = (MessageType) objectInputStreamWithControlNode.readObject();
-					FreeChunkServerList freeChunkServerListMsg = null;
-					
-					if(msgType instanceof FreeChunkServerList)
-						freeChunkServerListMsg = (FreeChunkServerList) msgType;
-					else
-					{
-						System.out.println("FreeChunkServerList not received. Unexpected message received");
-						continue;
-					}
-					ArrayList<String> freeChunkServerList = freeChunkServerListMsg.getFreeChunkServerList();
-					
-					Chunk chunk = new Chunk(currentFullFileName, content, chunkIndex);
-					
-					FileUpload_CL_CS fileUploadMsg = new FileUpload_CL_CS(ipAddress, chunk, freeChunkServerList);
-					
-					chunkServerAddress = freeChunkServerList.get(0);
-					openConnectionWithChunkServer(chunkServerAddress);
-					sendMessageToChunkServer(fileUploadMsg, chunkServerAddress);
-					closeConnectionWithChunkServer();
-					
-					stringBuilder.delete(0, ControlNode.CHUNK_SIZE_BYTES);
-					content = null;
-					chunkIndex++;
+					result = br.read();
+					if(result == -1)
+						break;
+					ch = (char) result;
+					tempStringBuilder.append(ch);
+					charRead++;
 				}
+				
+				content = tempStringBuilder.toString();
+				
+				FileUploadRequest_CL_CN fileUploadReqMsg = new FileUploadRequest_CL_CN(content.length(), ipAddress);
+				sendMessageToControllerNode(fileUploadReqMsg);
+				
+				msgType = (MessageType) objectInputStreamWithControlNode.readObject();
+				FreeChunkServerList freeChunkServerListMsg = null;
+				
+				if(msgType instanceof FreeChunkServerList)
+					freeChunkServerListMsg = (FreeChunkServerList) msgType;
+				else
+				{
+					System.out.println("FreeChunkServerList not received. Unexpected message received");
+					continue;
+				}
+				ArrayList<String> freeChunkServerList = freeChunkServerListMsg.getFreeChunkServerList();
+				
+				Chunk chunk = new Chunk(currentFullFileName, content, chunkIndex);
+				
+				FileUpload_CL_CS fileUploadMsg = new FileUpload_CL_CS(ipAddress, chunk, freeChunkServerList);
+				
+				chunkServerAddress = freeChunkServerList.get(0);
+				openConnectionWithChunkServer(chunkServerAddress);
+				sendMessageToChunkServer(fileUploadMsg, chunkServerAddress);
+				closeConnectionWithChunkServer();
+				
+				content = null;
+				chunkIndex++;
 			}
 		} catch (FileNotFoundException e) {
 			errorOccured = true;
@@ -374,7 +384,7 @@ public class Client
 	private void closeConnectionWithChunkServer()
 	{
 		try {
-			Thread.sleep(50);
+			Thread.sleep(100);
 		} catch (InterruptedException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();

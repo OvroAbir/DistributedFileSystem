@@ -117,7 +117,7 @@ public class Chunk implements Serializable
 	private ArrayList<String> calculateWholeSHA1(String fileContent)
 	{
 		ArrayList<String> shaValues = new ArrayList<String>();
-		int offset = 0;
+		int offset = 0, leftCharCount = fileContent.length();
 		
 		MessageDigest messageDigest = null;
 		try {
@@ -130,8 +130,9 @@ public class Chunk implements Serializable
 		
 		while(offset < fileContent.length())
 		{
-			String subString = fileContent.substring(offset, offset + SHA1_INPUT_LEN);
-			offset += SHA1_INPUT_LEN;
+			String subString = fileContent.substring(offset, Math.min(offset + SHA1_INPUT_LEN, offset + leftCharCount));
+			offset += subString.length();
+			leftCharCount = Math.max(0, leftCharCount - subString.length());
 			digested = messageDigest.digest(subString.getBytes());
 			shaValues.add(new String(digested));
 		}
@@ -144,14 +145,17 @@ public class Chunk implements Serializable
 		File file = new File(fileName);
 		StringBuilder stringBuilder = new StringBuilder();
 		BufferedReader br;
+		int result;
+		char ch;
 		
 		try {
 			br = new BufferedReader(new FileReader(file));
 			String tempStr;
 			
-			while ((tempStr = br.readLine()) != null) // TODO change if there is no new line 
+			while ((result = br.read()) != -1) // TODO change if there is no new line 
 			{
-				stringBuilder.append(tempStr);
+				ch = (char) result;
+				stringBuilder.append(ch);
 			}
 		} catch (FileNotFoundException e) {
 			System.out.println("Could not find file " + fileName);
