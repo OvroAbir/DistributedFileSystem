@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import TCP.Server;
 import TCP.ServerThread;
 import control_node.ControlNode;
+import messages.FileUpload_CL_CS;
 import messages.HeartBeat;
 import messages.MajorHeartBeat;
 import messages.MessageType;
@@ -26,9 +27,11 @@ public class ChunkServer
 	public static int MAJOR_HEART_BEAT_INTERVAL = 300000;
 	
 	public static int CHUNK_SERVER_SOCKET_PORT_FOR_CLIENTS = 5050;
+	public static int CHUNK_SERVER_SOCKET_PORT_FOR_CHUNK_SERVERS = 5088;
 	
 	public static String chunkNameSeperator = "_chunk";
-	public static String FILE_STORAGE_FOLDER_LOCATION = "C:\\TempProjectData";
+	public static String FILE_STORAGE_FOLDER_LOCATION = 
+			(System.getProperty("os.name").startsWith("Windows") ? "C:\\TempProjectData" : "/tmp/TempProjData") ;
 	
 	private String ipAddress;
 	private int freeSpace; // in bytes
@@ -49,12 +52,16 @@ public class ChunkServer
 	private ServerSocket serverSocketWithClients;
 	private int chunkServerThreadCounter;
 	
+	private ServerSocket serverSocketWithChunkServer;
+	private int chunkServerThreadForChunkServer;
+	
 	public ChunkServer(String ipAddress, int freeSpace) 
 	{
 		this.ipAddress = ipAddress;
 		this.freeSpace = freeSpace;
 		
 		chunkServerThreadCounter = 0;
+		chunkServerThreadForChunkServer = 0;
 		
 		allChunks = new ArrayList<Chunk>();
 		newlyAddedChunks = new ArrayList<Chunk>();
@@ -78,7 +85,44 @@ public class ChunkServer
 		
 		startHeartBeatTimer();
 		openConnectionWithClients();
+		openConnectionWithChunkServers();
 	}
+	
+
+	private void openConnectionWithChunkServers()
+	{
+		try 
+		{
+			serverSocketWithChunkServer = new ServerSocket(CHUNK_SERVER_SOCKET_PORT_FOR_CHUNK_SERVERS);
+			System.out.println("Chunk Server " + ipAddress + " opened ServerSocketForChunkServers in port " +  CHUNK_SERVER_SOCKET_PORT_FOR_CHUNK_SERVERS);
+			
+		} 
+		catch (IOException e) 
+		{
+			System.out.println("Can not create ChunkServersocket for ChunkServers.");
+			e.printStackTrace();
+		}
+		
+		while(true)
+		{
+			try 
+			{
+				Socket socketForCS = serverSocketWithChunkServer.accept();
+				System.out.println("ChunkServer accepted a connection from CS");
+				ChunkServerThreadForChunkServers chunkServerThreadForChunkServers = new ChunkServerThreadForChunkServers(socketForCS, ipAddress,
+						++chunkServerThreadForChunkServer, this);
+				chunkServerThreadForChunkServers.start();
+			}
+			catch (IOException e) 
+			{
+				System.out.println("Tried to accept connection from CS. But failed.");
+				e.printStackTrace();
+			}
+			
+		}
+		
+	}
+	
 	
 	private void openConnectionWithClients()
 	{
@@ -186,5 +230,30 @@ public class ChunkServer
 	{
 		freeSpace -= amount;
 		freeSpace = Math.max(0, freeSpace);
+	}
+	
+	protected void forwardFileUploadMessageToAnotherChunkServer(FileUpload_CL_CS fileUploadMsg)
+	{
+		if(fileUploadMsg.needToSendAnotherChunkServer() == false)
+			return;
+		String csAddress = fileUploadMsg.nextChunkServerAddress();
+		
+		try {
+			Socket socket = new Socket(csAddress, CHUNK_SERVER_SOCKET_PORT_FOR_CHUNK_SERVERS);
+			ObjectOutputStream objectOutputStreamWithCS = new ObjectOutputStream(socket.getOutputStream());	
+			objectOutputStreamWithCS.writeObject(fileUploadMsg);
+			objectOutputStreamWithCS.flush();
+			
+			Thread.sleep(100);
+			
+			objectOutputStreamWithCS.close();
+			socket.close();
+		} catch (IOException e) {
+			System.out.println("Could not open connection with " + csAddress);
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

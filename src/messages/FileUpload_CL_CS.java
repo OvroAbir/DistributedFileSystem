@@ -24,6 +24,11 @@ public class FileUpload_CL_CS extends MessageType
 		return chunkServerAddressToForward.size() > 0;
 	}
 	
+	public String nextChunkServerAddress()
+	{
+		return chunkServerAddressToForward.get(0);
+	}
+	
 	public void removeFirstElementFromChunkServerList()
 	{
 		if(chunkServerAddressToForward.size() == 0)
