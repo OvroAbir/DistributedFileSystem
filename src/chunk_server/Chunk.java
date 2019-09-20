@@ -40,6 +40,30 @@ public class Chunk implements Serializable
 		this.chunkMetadata = chunkMetadata;
 	}
 	
+	public String getData()
+	{
+		if(isDataInMemory == false)
+		{
+			System.out.println("File Data was not in memory");
+			return null;
+		}
+		return realContent;
+	}
+	
+	public void prepareChunkBeforeSendingToClient()
+	{
+		if(isDataInMemory == false)
+		{
+			try {
+				retrieveRealDataFromDisk();
+			} catch (FileDataChanged e) {
+				System.out.println("Chunk data has been changed");
+				// TODO Request data from another CS
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	public String storeRealDataInDisk(String folderName)
 	{
 		storedFileName = folderName + File.separator + chunkMetadata.getChunkFileName();
@@ -80,9 +104,9 @@ public class Chunk implements Serializable
 		return true;
 	}
 	
-	public void retrieveRealDataFromDisk(String folderName) throws FileDataChanged
+	public void retrieveRealDataFromDisk() throws FileDataChanged
 	{
-		String fullFilePath = folderName + File.separator + storedFileName;
+		String fullFilePath = storedFileName;
 		String content = readFile(fullFilePath);
 		if(isFileDataUnChanged(content) == false)
 			throw new FileDataChanged();

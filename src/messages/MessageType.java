@@ -14,6 +14,10 @@ public class MessageType implements Serializable
 	public static int UPLOAD_FILE_REQ_CL_CN = ++messageTypeCounter;
 	public static int UPLOAD_FILE_CL_CS = ++messageTypeCounter;
 	public static int FREE_CHUNK_SERVER_LIST_CN_CL = ++messageTypeCounter;
+	public static int REQUEST_CHUNK_SERVER_LIST_FOR_STORED_FILE = ++messageTypeCounter;
+	public static int CHUNK_SERVER_LIST_FOR_STORED_FILE = ++messageTypeCounter;
+	public static int REQUEST_CHUNK_DATA_TO_CHUNK_SERVER = ++messageTypeCounter;
+	public static int DOWNLOAD_CHUNK_CS_CL = ++messageTypeCounter;
 	public static int ERROR_MESSAGE = ++messageTypeCounter;
 	public static int SUCCESS_MESSAGE = ++messageTypeCounter;
 	

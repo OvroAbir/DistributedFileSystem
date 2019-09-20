@@ -8,15 +8,19 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 
 import chunk_server.ChunkMetadata;
+import chunk_server.ChunkServer;
 import messages.ErrorMessage;
+import messages.FileStoringChunkServerList;
 import messages.FileUploadRequest_CL_CN;
 import messages.FreeChunkServerList;
 import messages.HeartBeat;
 import messages.MajorHeartBeat;
 import messages.MessageType;
 import messages.MinorHeartBeat;
+import messages.RequestFileLocation_CL_CN;
 
 public class ControlNodeThread extends Thread
 {
@@ -163,6 +167,28 @@ public class ControlNodeThread extends Thread
 		}
 	}
 	
+	
+	private FileStoringChunkServerList findStoredFileLocations(RequestFileLocation_CL_CN msg)
+	{
+		String fileName = msg.getFileName();
+		ArrayList<String> chunkServerList = new ArrayList<String>();
+		Random random = new Random();
+		
+		for(int chunk = 0;;chunk++)
+		{
+			String chunkName = fileName + ChunkServer.chunkNameSeperator + chunk;
+			if(chunkStorageInfo.containsKey(chunkName) == false)
+				break;
+			ArrayList<String> csList = chunkStorageInfo.get(chunkName);
+			if(csList.size() == 0)
+				break;
+			String randDomCSAdrs = csList.get(random.nextInt(csList.size()));
+			chunkServerList.add(randDomCSAdrs);
+		}
+		
+		return new FileStoringChunkServerList(chunkServerList);
+	}
+	
 	private void resolveReceivedMessage(MessageType msg)
 	{
 		if(msg.getMessageType() == MessageType.UPLOAD_FILE_REQ_CL_CN)
@@ -170,6 +196,12 @@ public class ControlNodeThread extends Thread
 			System.out.println("Received file upload request from client " + msg.getMessageFrom());
 			MessageType chunkServerList = findFreeChunkServers(((FileUploadRequest_CL_CN) msg).getFileSize());
 			sendMessage(chunkServerList);
+		}
+		else if(msg.getMessageType() == MessageType.REQUEST_CHUNK_SERVER_LIST_FOR_STORED_FILE)
+		{
+			System.out.println("Received file location request from client " + msg.getMessageFrom());
+			MessageType fileLocations = findStoredFileLocations((RequestFileLocation_CL_CN) msg);
+			sendMessage(fileLocations);
 		}
 		else if(msg.getMessageType() == MessageType.MAJOR_HEARTBEAT_CS_CN)
 		{

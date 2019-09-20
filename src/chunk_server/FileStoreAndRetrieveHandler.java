@@ -33,7 +33,7 @@ public class FileStoreAndRetrieveHandler
 	public Chunk retrieveFileChunk(String chunkName)
 	{
 		Chunk chunk = null;
-		if(hashMap.contains(chunkName))
+		if(hashMap.containsKey(chunkName))
 			chunk = hashMap.get(chunkName);
 		return chunk;
 	}

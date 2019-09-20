@@ -1,11 +1,13 @@
 package client;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -18,10 +20,15 @@ import TCP.UtilityMethods;
 import chunk_server.Chunk;
 import chunk_server.ChunkServer;
 import control_node.ControlNode;
+import messages.ErrorMessage;
+import messages.FileDownload_CS_CL;
+import messages.FileStoringChunkServerList;
 import messages.FileUploadRequest_CL_CN;
 import messages.FileUpload_CL_CS;
 import messages.FreeChunkServerList;
 import messages.MessageType;
+import messages.RequestChunkData_CL_CS;
+import messages.RequestFileLocation_CL_CN;
 
 public class Client 
 {
@@ -34,6 +41,14 @@ public class Client
 	
 	private static int WANT_TO_UPLOAD_FILE = 1;
 	private static int WANT_TO_DOWNLOAD_FILE = 2;
+	
+	private Socket socketWithChunkServer;
+	private DataInputStream dataInputStreamWithChunkServer;
+	private DataOutputStream dataOutputStreamWithChunkServer;
+	private ObjectInputStream objectInputStreamWithChunkServer;
+	private ObjectOutputStream objectOutputStreamWithChunkServer;
+	
+	private static String DEFAULT_FILE_DOWNLOAD_LOCATION = "ClientDownloadFolder";
 	
 	private String currentFullFileName, currentFullFilePath;
 	private int currentChoice;
@@ -89,6 +104,10 @@ public class Client
 				return;
 			}
 		}
+		else if(currentChoice == WANT_TO_DOWNLOAD_FILE)
+		{
+			System.out.println("Downloading your file.");
+		}
 	}
 	
 	private void sendMessageToControllerNode(MessageType msg)
@@ -115,20 +134,18 @@ public class Client
 			
 			while(true)
 			{
-				
 				whatUserWantToDo();
 				
 				if(currentChoice == WANT_TO_UPLOAD_FILE)
-				{
 					uploadAFullFile();
+				else if(currentChoice == WANT_TO_DOWNLOAD_FILE)
+				{
+					String fullFilePath = downloadAFullFile();
+					if(fullFilePath == null)
+						System.out.println(currentFullFileName + " file not found.");
+					System.out.println("File has been downloaded to " + fullFilePath);
 				}
 				
-				try {
-					Thread.sleep(10000);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
 			}
 		} 
 		catch (IOException e) 
@@ -138,6 +155,88 @@ public class Client
 		}
 	}
 	
+	private ArrayList<String> getStoringChunkServerListFromController(String fileName)
+	{
+		MessageType askControlNode = new RequestFileLocation_CL_CN(fileName, ipAddress);
+		sendMessageToControllerNode(askControlNode);
+		FileStoringChunkServerList chunkServerListMsg = null;
+		
+		try {
+			MessageType rcvdMsg = (MessageType) objectInputStreamWithControlNode.readObject();
+			if(rcvdMsg.getMessageType() != MessageType.CHUNK_SERVER_LIST_FOR_STORED_FILE)
+			{
+				System.out.println("Did not understand response from control node");
+				return null;
+			}
+			chunkServerListMsg = (FileStoringChunkServerList) rcvdMsg;
+		} catch (ClassNotFoundException | IOException e) {
+			e.printStackTrace();
+		}
+		
+		ArrayList<String> chunkServerlist = chunkServerListMsg.getChunkServerList();
+		if(chunkServerlist == null || chunkServerlist.isEmpty())
+		{
+			System.out.println("Could not find chunk server list. Empty response from control node.");
+			return null;
+		}
+		
+		return chunkServerlist;
+	}
+	
+	private String concatFilePath(String folder, String filename)
+	{
+		return folder + File.separator + filename;
+	}
+	
+	private void appendDataToFile(String fileName, String data)
+	{
+		BufferedWriter out;
+		try {
+			out = new BufferedWriter(new FileWriter(fileName, true));
+			out.write(data); 
+			out.close(); 
+		} catch (IOException e) {
+			System.out.println("Could not write data to file " + fileName);
+			e.printStackTrace();
+		} 
+	}
+	
+	private String getAChunkFromChunkServer(String fileName, int chunkIndex, String chunkServerAddress)
+	{
+		MessageType request = new RequestChunkData_CL_CS(fileName, chunkIndex, ipAddress);
+		sendMessageToChunkServer(request, chunkServerAddress);
+		
+		MessageType rcvdMsg = receieveMessageFromChunkServer(chunkServerAddress);
+		if(rcvdMsg.getMessageType() != MessageType.DOWNLOAD_CHUNK_CS_CL)
+		{
+			System.out.println("Could not understand msg from Chunk Server " + chunkServerAddress);
+			return null;
+		}
+		FileDownload_CS_CL fileDownloadMsg = (FileDownload_CS_CL) rcvdMsg;
+		String data = fileDownloadMsg.getFileChunk().getData();
+		
+		return data;
+	}
+	private String downloadAFullFile()
+	{
+		String fileName = currentFullFileName;
+		ArrayList<String> chunkServerList = getStoringChunkServerListFromController(fileName);
+		if(chunkServerList == null)
+			return null;
+		
+		String filePath = concatFilePath(DEFAULT_FILE_DOWNLOAD_LOCATION, fileName);
+		
+		for(int chunk=0;chunk<chunkServerList.size();chunk++)
+		{
+			String chunkServerAddress = chunkServerList.get(chunk);
+			openConnectionWithChunkServer(chunkServerAddress);
+			String chunkData = getAChunkFromChunkServer(fileName, chunk, chunkServerAddress);
+			appendDataToFile(filePath, chunkData);
+			closeConnectionWithChunkServer();
+		}
+		
+		return filePath;
+	}
 
 	private void uploadAFullFile()
 	{
@@ -150,7 +249,7 @@ public class Client
 		
 		try {
 			br = new BufferedReader(new FileReader(file));
-			String tempStr, content;
+			String tempStr, content, chunkServerAddress;
 			int chunkIndex = 0;
 			MessageType msgType;
 			
@@ -181,7 +280,10 @@ public class Client
 					
 					FileUpload_CL_CS fileUploadMsg = new FileUpload_CL_CS(ipAddress, chunk, freeChunkServerList);
 					
-					sendMessageToChunkServer(fileUploadMsg, freeChunkServerList.get(0));
+					chunkServerAddress = freeChunkServerList.get(0);
+					openConnectionWithChunkServer(chunkServerAddress);
+					sendMessageToChunkServer(fileUploadMsg, chunkServerAddress);
+					closeConnectionWithChunkServer();
 					
 					stringBuilder.delete(0, ControlNode.CHUNK_SIZE_BYTES);
 					content = null;
@@ -208,26 +310,32 @@ public class Client
 			System.out.println("There were some error uploading the file.");
 	}
 	
+	private MessageType receieveMessageFromChunkServer(String chunkServerAddress)
+	{
+		MessageType rcvdMsg = null;
+		try {
+			rcvdMsg = (MessageType) objectInputStreamWithChunkServer.readObject();
+		} catch (UnknownHostException e) {
+			System.out.println("Can not connect with Chunk Server " + chunkServerAddress);
+			e.printStackTrace();
+		} catch (IOException e) {
+			System.out.println("Can not get object stream for " + chunkServerAddress);
+			e.printStackTrace(); 
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+		if(rcvdMsg.getMessageType() == MessageType.ERROR_MESSAGE)
+			System.out.println(((ErrorMessage)rcvdMsg).getErrorMessage());
+		
+		return rcvdMsg;
+	}
+	
 	private void sendMessageToChunkServer(MessageType msg, String chunkServerAddress)
 	{
 		try {
-			Socket socketWithChunkServer = new Socket(chunkServerAddress, ChunkServer.CHUNK_SERVER_SOCKET_PORT_FOR_CLIENTS);
-			DataOutputStream dataOutputStreamWithChunkServer = new DataOutputStream(socketWithChunkServer.getOutputStream());
-			DataInputStream dataInputStreamWithChunkServer = new DataInputStream(socketWithChunkServer.getInputStream());
-			
-			ObjectOutputStream objectOutputStreamWithChunkServer = new ObjectOutputStream(dataOutputStreamWithChunkServer);
-			ObjectInputStream objectInputStreamWithChunkServer = new ObjectInputStream(dataInputStreamWithChunkServer);
-			
 			objectOutputStreamWithChunkServer.writeObject(msg);
-			
 			objectOutputStreamWithChunkServer.flush();
-			
-			objectOutputStreamWithChunkServer.close();
-			objectInputStreamWithChunkServer.close();
-			dataOutputStreamWithChunkServer.close();
-			dataInputStreamWithChunkServer.close();
-			socketWithChunkServer.close();
-			
 		} catch (UnknownHostException e) {
 			System.out.println("Can not connect with Chunk Server " + chunkServerAddress);
 			e.printStackTrace();
@@ -236,5 +344,58 @@ public class Client
 			e.printStackTrace(); 
 		}
 		
+	}
+	
+
+	private void openConnectionWithChunkServer(String chunkServerAddress)
+	{
+		if(socketWithChunkServer != null)
+		{
+			System.out.println("Caution : Socket with chunk server already exists");
+			//return;
+		}
+		try {
+			socketWithChunkServer = new Socket(chunkServerAddress, ChunkServer.CHUNK_SERVER_SOCKET_PORT_FOR_CLIENTS);
+			dataOutputStreamWithChunkServer = new DataOutputStream(socketWithChunkServer.getOutputStream());
+			dataInputStreamWithChunkServer = new DataInputStream(socketWithChunkServer.getInputStream());
+			
+			objectOutputStreamWithChunkServer = new ObjectOutputStream(dataOutputStreamWithChunkServer);
+			objectInputStreamWithChunkServer = new ObjectInputStream(dataInputStreamWithChunkServer);
+		} catch (UnknownHostException e) {
+			System.out.println("Can not connect with Chunk Server " + chunkServerAddress);
+			e.printStackTrace();
+		} catch (IOException e) {
+			System.out.println("Can not get object stream for " + chunkServerAddress);
+			e.printStackTrace(); 
+		}
+		
+	}
+	
+	private void closeConnectionWithChunkServer()
+	{
+		try {
+			Thread.sleep(50);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		if(socketWithChunkServer == null)
+			return;
+		try {
+			objectOutputStreamWithChunkServer.close();
+			objectInputStreamWithChunkServer.close();
+			dataOutputStreamWithChunkServer.close();
+			dataInputStreamWithChunkServer.close();
+			socketWithChunkServer.close();
+		} catch (IOException e) {
+			//System.out.println("Exception while closing connection with client");
+			//e.printStackTrace();
+		}
+		socketWithChunkServer = null;
+		dataOutputStreamWithChunkServer = null;
+		dataInputStreamWithChunkServer = null;
+		objectInputStreamWithChunkServer = null;
+		objectOutputStreamWithChunkServer = null;
 	}
 }
