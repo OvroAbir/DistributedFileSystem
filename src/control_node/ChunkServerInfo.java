@@ -12,6 +12,11 @@ public class ChunkServerInfo
 		this.ip_adress = ip_adress;
 		this.freeSpace = freeSpace;
 	}
+	
+	public String toString()
+	{
+		return ip_adress + " : " + freeSpace + " Bytes";
+	}
 
 	public String getIp_adress() {
 		return ip_adress;

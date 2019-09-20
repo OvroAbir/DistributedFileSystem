@@ -31,8 +31,9 @@ public class ChunkServer
 	
 	public static String chunkNameSeperator = "_chunk";
 	public static String FILE_STORAGE_FOLDER_LOCATION = 
-			(System.getProperty("os.name").startsWith("Windows") ? "C:\\TempProjectData" : "/tmp/TempProjData") ;
-	
+			(System.getProperty("os.name").startsWith("Windows") ? "C:\\TempProjectData" : 
+				"/s/chopin/a/grad/joyghosh/Documents/tmp") ;
+			// TODO change folder location
 	private String ipAddress;
 	private int freeSpace; // in bytes
 	
@@ -129,7 +130,7 @@ public class ChunkServer
 		try 
 		{
 			serverSocketWithClients = new ServerSocket(CHUNK_SERVER_SOCKET_PORT_FOR_CLIENTS);
-			System.out.println("Chunk Server " + ipAddress + " opened ServerSocketForLients in port " +  CHUNK_SERVER_SOCKET_PORT_FOR_CLIENTS);
+			System.out.println("Chunk Server " + ipAddress + " opened ServerSocketForClients in port " +  CHUNK_SERVER_SOCKET_PORT_FOR_CLIENTS);
 			
 		} 
 		catch (IOException e) 
@@ -237,6 +238,7 @@ public class ChunkServer
 		if(fileUploadMsg.needToSendAnotherChunkServer() == false)
 			return;
 		String csAddress = fileUploadMsg.nextChunkServerAddress();
+		System.out.println("Sending chunk copy to " + csAddress + " : " + CHUNK_SERVER_SOCKET_PORT_FOR_CHUNK_SERVERS);
 		
 		try {
 			Socket socket = new Socket(csAddress, CHUNK_SERVER_SOCKET_PORT_FOR_CHUNK_SERVERS);

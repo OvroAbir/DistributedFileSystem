@@ -203,6 +203,7 @@ public class ControlNodeThread extends Thread
 			MessageType fileLocations = findStoredFileLocations((RequestFileLocation_CL_CN) msg);
 			sendMessage(fileLocations);
 		}
+		// TODO when server goes down remove its chunks from chunk storage infs
 		else if(msg.getMessageType() == MessageType.MAJOR_HEARTBEAT_CS_CN)
 		{
 			System.out.println("Received Major heartbeat from " + msg.getMessageFrom());
@@ -215,6 +216,7 @@ public class ControlNodeThread extends Thread
 			System.out.println("Received Minor heartbeat from " + msg.getMessageFrom());
 			updateChunkServerInfos(msg);
 			updateChunkStorageInformation(msg);
+			printCurrentSituaton();
 			// TODO Process the message
 		}
 		else
@@ -249,6 +251,19 @@ public class ControlNodeThread extends Thread
 		if(fileSize <= 0)
 			return 0;
 		return (int) Math.ceil((fileSize / (double)ControlNode.CHUNK_SIZE_BYTES));
+	}
+	
+	private void printCurrentSituaton()
+	{
+		System.out.println("---------------------------------\n"
+				+ "Chunk Server Infos");
+		for(ChunkServerInfo csi: chunkServerInfos)
+			System.out.println(csi);
+		System.out.println();
+		
+		System.out.println("Chunk Infos");
+		System.out.println(chunkStorageInfo);
+		System.out.println("---------------------------------\n");
 	}
 	
 }

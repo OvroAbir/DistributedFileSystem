@@ -63,6 +63,7 @@ public class ChunkServerThreadForClients extends Thread
 	
 	private void forwardToOtherChunkServers(FileUpload_CL_CS fileObject)
 	{
+		chunkServerInstance.forwardFileUploadMessageToAnotherChunkServer(fileObject);
 		// TODO implement this
 	}
 	
