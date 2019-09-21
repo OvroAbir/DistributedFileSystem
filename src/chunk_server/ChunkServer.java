@@ -34,7 +34,8 @@ public class ChunkServer
 			(System.getProperty("os.name").startsWith("Windows") ? "C:\\TempProjectData" : 
 				"/s/chopin/a/grad/joyghosh/Documents/tmp") ;
 			// TODO change folder location
-	private String ipAddress;
+	protected String ipAddress;
+
 	private int freeSpace; // in bytes
 	
 	private ArrayList<Chunk> allChunks;
@@ -51,17 +52,17 @@ public class ChunkServer
 	private ObjectOutputStream objectOutputStreamWithControlNode;
 	
 	private ServerSocket serverSocketWithClients;
-	private int chunkServerThreadCounter;
-	
+
 	private ServerSocket serverSocketWithChunkServer;
 	private int chunkServerThreadForChunkServer;
+	
+	private Thread chunkServerThreadForConnectingClient;
 	
 	public ChunkServer(String ipAddress, int freeSpace) 
 	{
 		this.ipAddress = ipAddress;
 		this.freeSpace = freeSpace;
 		
-		chunkServerThreadCounter = 0;
 		chunkServerThreadForChunkServer = 0;
 		
 		allChunks = new ArrayList<Chunk>();
@@ -89,7 +90,12 @@ public class ChunkServer
 		openConnectionWithChunkServers();
 	}
 	
-
+	private void openConnectionWithClients()
+	{
+		chunkServerThreadForConnectingClient = new ChunkServerThreadForConnectingClients(this);
+		chunkServerThreadForConnectingClient.start();
+	}
+	
 	private void openConnectionWithChunkServers()
 	{
 		try 
@@ -124,41 +130,7 @@ public class ChunkServer
 		
 	}
 	
-	
-	private void openConnectionWithClients()
-	{
-		try 
-		{
-			serverSocketWithClients = new ServerSocket(CHUNK_SERVER_SOCKET_PORT_FOR_CLIENTS);
-			System.out.println("Chunk Server " + ipAddress + " opened ServerSocketForClients in port " +  CHUNK_SERVER_SOCKET_PORT_FOR_CLIENTS);
-			
-		} 
-		catch (IOException e) 
-		{
-			System.out.println("Can not create ChunkServersocket for Clients.");
-			e.printStackTrace();
-		}
-		
-		while(true)
-		{
-			try 
-			{
-				Socket socketForClients = serverSocketWithClients.accept();
-				System.out.println("ChunkServer accepted a connection");
-				ChunkServerThreadForClients serverThreadForClients = new ChunkServerThreadForClients(socketForClients, ipAddress,
-						++chunkServerThreadCounter, this);
-				serverThreadForClients.start();
-			}
-			catch (IOException e) 
-			{
-				System.out.println("Tried to accept connection from client. But failed.");
-				e.printStackTrace();
-			}
-			
-		}
-		
-	}
-	
+
 	private void startHeartBeatTimer()
 	{
 		Timer timer = new Timer("HearBeatTimer");
