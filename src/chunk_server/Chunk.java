@@ -67,6 +67,10 @@ public class Chunk implements Serializable
 	public String storeRealDataInDisk(String folderName)
 	{
 		storedFileName = folderName + File.separator + chunkMetadata.getChunkFileName();
+		
+		if(isDataInMemory == false)
+			return storedFileName;
+		
 		PrintWriter pw = null;
 		try {
 			pw = new PrintWriter(new File(storedFileName));

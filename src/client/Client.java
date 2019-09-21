@@ -190,9 +190,14 @@ public class Client
 	
 	private void appendDataToFile(String fileName, String data)
 	{
+		File file = new File(fileName);
 		BufferedWriter out;
+		
 		try {
-			out = new BufferedWriter(new FileWriter(fileName, true));
+			if(file.exists() == false)
+				file.createNewFile();
+		
+			out = new BufferedWriter(new FileWriter(file, true));
 			out.write(data); 
 			out.close(); 
 		} catch (IOException e) {
@@ -384,7 +389,7 @@ public class Client
 	private void closeConnectionWithChunkServer()
 	{
 		try {
-			Thread.sleep(100);
+			Thread.sleep(500);
 		} catch (InterruptedException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
