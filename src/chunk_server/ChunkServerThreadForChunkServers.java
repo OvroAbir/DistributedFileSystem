@@ -77,10 +77,17 @@ public class ChunkServerThreadForChunkServers extends Thread
 				fileUploadMsg.removeFirstElementFromChunkServerList();
 				
 				Chunk chunk = fileUploadMsg.getFileChunk();
-				fileHandler.storeFileChunk(chunk);
 				
-				if(fileUploadMsg.needToSendAnotherChunkServer())
-					chunkServerInstance.forwardFileUploadMessageToAnotherChunkServer(fileUploadMsg);
+				if(fileUploadMsg.needToSendAnotherChunkServer()) {
+					try {
+						chunk.prepareChunkBeforeSendingToClient();
+						chunkServerInstance.forwardFileUploadMessageToAnotherChunkServer(fileUploadMsg);
+					} catch (FileDataChanged e) {
+						System.out.println("File data changed before could forward it to other CS.");
+						e.printStackTrace();
+					}
+				}
+				fileHandler.storeFileChunk(chunk);
 			}
 			else if(inComingMsg.getMessageType() == MessageType.REQUEST_FRESH_CHUNK_COPY_CS_CS)
 			{

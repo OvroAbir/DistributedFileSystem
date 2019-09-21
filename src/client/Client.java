@@ -41,6 +41,7 @@ public class Client
 	
 	private static int WANT_TO_UPLOAD_FILE = 1;
 	private static int WANT_TO_DOWNLOAD_FILE = 2;
+	private static int WANT_TO_EXIT = 3;
 	
 	private Socket socketWithChunkServer;
 	private DataInputStream dataInputStreamWithChunkServer;
@@ -76,12 +77,15 @@ public class Client
 	{
 		System.out.println("What do you want to do?");
 		System.out.println("Enter " + WANT_TO_UPLOAD_FILE + " to upload a file. "
-				+ "Or enter " + WANT_TO_DOWNLOAD_FILE + " to download a file.");
+				+ "Or enter " + WANT_TO_DOWNLOAD_FILE + " to download a file."
+						+ "Or enter " + WANT_TO_EXIT + " to exit.");
+		
 		Scanner scanner = new Scanner(System.in);
 		currentChoice = Integer.parseInt(scanner.nextLine());
 		
 		
-		if(currentChoice != WANT_TO_DOWNLOAD_FILE && currentChoice != WANT_TO_UPLOAD_FILE)
+		if(currentChoice != WANT_TO_DOWNLOAD_FILE && currentChoice != WANT_TO_UPLOAD_FILE 
+				&& currentChoice != WANT_TO_EXIT)
 		{
 			System.out.println("Wrong choice. Enter again.");
 			whatUserWantToDo();
@@ -108,6 +112,8 @@ public class Client
 		{
 			System.out.println("Downloading your file.");
 		}
+		else if(currentChoice == WANT_TO_EXIT)
+			return;
 	}
 	
 	private void sendMessageToControllerNode(MessageType msg)
@@ -188,22 +194,28 @@ public class Client
 		return folder + File.separator + filename;
 	}
 	
-	private void appendDataToFile(String fileName, String data)
+	private String appendDataToFile(String fileName, String data)
 	{
 		File file = new File(fileName);
 		BufferedWriter out;
 		
 		try {
+			if(file.getParentFile().exists() == false)
+				file.getParentFile().mkdirs();
 			if(file.exists() == false)
 				file.createNewFile();
 		
 			out = new BufferedWriter(new FileWriter(file, true));
-			out.write(data); 
+			out.write(data);
+			out.flush();
+			
 			out.close(); 
+			
 		} catch (IOException e) {
 			System.out.println("Could not write data to file " + fileName);
 			e.printStackTrace();
-		} 
+		}
+		return file.getAbsolutePath();
 	}
 	
 	private String getAChunkFromChunkServer(String fileName, int chunkIndex, String chunkServerAddress)
@@ -247,17 +259,19 @@ public class Client
 			return null;
 		
 		String filePath = concatFilePath(DEFAULT_FILE_DOWNLOAD_LOCATION, fileName);
+		String absPath = filePath;
+		
 		
 		for(int chunk=0;chunk<chunkServerList.size();chunk++)
 		{
 			String chunkServerAddress = chunkServerList.get(chunk);
 			openConnectionWithChunkServer(chunkServerAddress);
 			String chunkData = getAChunkFromChunkServer(fileName, chunk, chunkServerAddress);
-			appendDataToFile(filePath, chunkData);
+			absPath = appendDataToFile(filePath, chunkData);
 			closeConnectionWithChunkServer();
 		}
 		
-		return filePath;
+		return absPath;
 	}
 
 	private void uploadAFullFile()

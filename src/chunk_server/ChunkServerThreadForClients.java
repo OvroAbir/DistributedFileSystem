@@ -100,12 +100,12 @@ public class ChunkServerThreadForClients extends Thread
 			return new ErrorMessage("Message Field is null", clientAddress);
 		else if(msg.getMessageType() == MessageType.UPLOAD_FILE_CL_CS)
 		{
-			FileUpload_CL_CS fileObject = (FileUpload_CL_CS) msg;
-			if(storeFileChunk(fileObject) == false)
-				return new ErrorMessage("Some error happened while storing the file.", chunkServerIpAddress);
+			FileUpload_CL_CS fileObject = (FileUpload_CL_CS) msg;			
 			fileObject.removeFirstElementFromChunkServerList();
 			if(fileObject.needToSendAnotherChunkServer())
 				forwardToOtherChunkServers(fileObject);
+			if(storeFileChunk(fileObject) == false)
+				return new ErrorMessage("Some error happened while storing the file.", chunkServerIpAddress);
 			return new SuccessMessage(chunkServerIpAddress);
 		}
 		else if(msg.getMessageType() == MessageType.REQUEST_CHUNK_DATA_TO_CHUNK_SERVER)

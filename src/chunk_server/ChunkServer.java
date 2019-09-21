@@ -2,11 +2,14 @@ package chunk_server;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -32,7 +35,8 @@ public class ChunkServer
 	public static String chunkNameSeperator = "_chunk";
 	public static String FILE_STORAGE_FOLDER_LOCATION = 
 			(System.getProperty("os.name").startsWith("Windows") ? "C:\\TempProjectData" : 
-				"/s/chopin/a/grad/joyghosh/Documents/tmp") ;
+				//"/s/chopin/a/grad/joyghosh/Documents/tmp") ;
+				"/tmp/joyghosh");
 			// TODO change folder location
 		// TODO different chhunk folder for different cs
 	protected String ipAddress;
@@ -103,9 +107,21 @@ public class ChunkServer
 		return chunkServerID;
 	}
 	
+	private String getHostName()
+	{
+		InetAddress addr;
+		try {
+			addr = InetAddress.getLocalHost();
+		    return addr.getHostName();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
+		return "DummyFolder";
+	}
+	
 	protected String getChunkServerSpecificFileStorageLocation()
 	{
-		return FILE_STORAGE_FOLDER_LOCATION + String.format("_%03d", chunkServerID); 
+		return FILE_STORAGE_FOLDER_LOCATION + File.separator + getHostName();
 	}
 	
 	private void openConnectionWithClients()

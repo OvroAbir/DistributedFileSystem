@@ -72,11 +72,25 @@ public class Chunk implements Serializable
 		if(isDataInMemory == false)
 			return storedFileName;
 		
+		System.out.println("Storing file " + storedFileName);
+		
+		File file = new File(storedFileName);
+		
+		
 		PrintWriter pw = null;
 		try {
-			pw = new PrintWriter(new File(storedFileName));
+			if(file.getParentFile().exists() == false)
+				file.getParentFile().mkdirs();
+			
+			if(file.exists() == false)
+				file.createNewFile();
+			
+			pw = new PrintWriter(file);
 			pw.write(realContent);
 		} catch (FileNotFoundException e) {
+			System.out.println("Could not create file");
+			e.printStackTrace();
+		} catch (IOException e) {
 			System.out.println("Could not create file");
 			e.printStackTrace();
 		}
