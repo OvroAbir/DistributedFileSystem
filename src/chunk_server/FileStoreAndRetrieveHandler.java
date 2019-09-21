@@ -21,7 +21,7 @@ public class FileStoreAndRetrieveHandler
 	{
 		// TODO check for free space
 		// TODO check for duplicate / version information
-		chunk.storeRealDataInDisk(ChunkServer.FILE_STORAGE_FOLDER_LOCATION);
+		chunk.storeRealDataInDisk(chunkServerInstance.getChunkServerSpecificFileStorageLocation());
 		
 		hashMap.put(chunk.getChunkMetadata().getChunkFileName(), chunk);
 		allChunks.add(chunk);

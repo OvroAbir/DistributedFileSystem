@@ -102,7 +102,7 @@ public class ChunkServerThreadForChunkServers extends Thread
 					FileUpload_CL_CS fileUpload = new FileUpload_CL_CS(chunkServerInstance.getIpAddress(), chunk,
 							new ArrayList<String>());
 					sendReplyToChunkSever(fileUpload);
-					chunk.storeRealDataInDisk(ChunkServer.FILE_STORAGE_FOLDER_LOCATION);
+					chunk.storeRealDataInDisk(chunkServerInstance.getChunkServerSpecificFileStorageLocation());
 				}
 				
 			}

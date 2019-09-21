@@ -60,17 +60,23 @@ public class ChunkServer
 	private Thread chunkServerThreadForConnectingClient;
 	private ChunkServerThreadForChunkServers chunkServerThreadForChunkServers;
 	
+	private static int ChunkServerCounter = 0;
+	private int chunkServerID;
+	
 	public ChunkServer(String ipAddress, int freeSpace) 
 	{
 		this.ipAddress = ipAddress;
 		this.freeSpace = freeSpace;
 		
 		chunkServerThreadForChunkServer = 0;
+		chunkServerID = ChunkServerCounter++;
 		
 		allChunks = new ArrayList<Chunk>();
 		newlyAddedChunks = new ArrayList<Chunk>();
 		corruptedChunkNames = new ArrayList<String>();
 		hashMapForFile = new ConcurrentHashMap<String, Chunk>();
+		
+		System.out.println("Chunk Server Storage Location : " + getChunkServerSpecificFileStorageLocation());
 		
 		try {
 			socketWithControlNode = new Socket(ControlNode.IP_ADDRESS, ControlNode.PORT);
@@ -92,6 +98,15 @@ public class ChunkServer
 		openConnectionWithChunkServers();
 	}
 	
+	protected int getChunkServerID()
+	{
+		return chunkServerID;
+	}
+	
+	protected String getChunkServerSpecificFileStorageLocation()
+	{
+		return FILE_STORAGE_FOLDER_LOCATION + String.format("_%03d", chunkServerID); 
+	}
 	
 	private void openConnectionWithClients()
 	{

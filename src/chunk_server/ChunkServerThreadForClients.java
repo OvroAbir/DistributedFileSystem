@@ -61,6 +61,7 @@ public class ChunkServerThreadForClients extends Thread
 		
 	}
 	
+	
 	private boolean storeFileChunk(FileUpload_CL_CS fileObject)
 	{
 		chunkServerInstance.reduceFreeSpace(fileObject.getFileChunk().getTotalLength());
