@@ -34,6 +34,7 @@ public class ChunkServer
 			(System.getProperty("os.name").startsWith("Windows") ? "C:\\TempProjectData" : 
 				"/s/chopin/a/grad/joyghosh/Documents/tmp") ;
 			// TODO change folder location
+		// TODO different chhunk folder for different cs
 	protected String ipAddress;
 
 	private int freeSpace; // in bytes
@@ -57,6 +58,7 @@ public class ChunkServer
 	private int chunkServerThreadForChunkServer;
 	
 	private Thread chunkServerThreadForConnectingClient;
+	private ChunkServerThreadForChunkServers chunkServerThreadForChunkServers;
 	
 	public ChunkServer(String ipAddress, int freeSpace) 
 	{
@@ -90,6 +92,7 @@ public class ChunkServer
 		openConnectionWithChunkServers();
 	}
 	
+	
 	private void openConnectionWithClients()
 	{
 		chunkServerThreadForConnectingClient = new ChunkServerThreadForConnectingClients(this);
@@ -116,7 +119,7 @@ public class ChunkServer
 			{
 				Socket socketForCS = serverSocketWithChunkServer.accept();
 				System.out.println("ChunkServer accepted a connection from CS");
-				ChunkServerThreadForChunkServers chunkServerThreadForChunkServers = new ChunkServerThreadForChunkServers(socketForCS, ipAddress,
+				chunkServerThreadForChunkServers = new ChunkServerThreadForChunkServers(socketForCS, ipAddress,
 						++chunkServerThreadForChunkServer, this);
 				chunkServerThreadForChunkServers.start();
 			}
@@ -143,7 +146,7 @@ public class ChunkServer
 	}
 
 
-	private void sendMessageToControlNode(MessageType msg)
+	protected void sendMessageToControlNode(MessageType msg)
 	{
 		try {
 			objectOutputStreamWithControlNode.writeObject(msg);
@@ -152,6 +155,19 @@ public class ChunkServer
 			System.out.println("Can not send message to control node.");
 			e.printStackTrace();
 		}
+	}
+	
+	protected MessageType receieveMessageFromControlNode()
+	{
+		MessageType msg = null;
+		try {
+			msg = (MessageType) objectInputStreamWithControlNode.readObject();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return msg;
 	}
 	
 	protected void sendHeartBeat(HeartBeat heartBeat)

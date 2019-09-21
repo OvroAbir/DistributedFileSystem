@@ -50,7 +50,7 @@ public class Chunk implements Serializable
 		return realContent;
 	}
 	
-	public void prepareChunkBeforeSendingToClient()
+	public void prepareChunkBeforeSendingToClient() throws FileDataChanged
 	{
 		if(isDataInMemory == false)
 		{
@@ -60,6 +60,7 @@ public class Chunk implements Serializable
 				System.out.println("Chunk data has been changed");
 				// TODO Request data from another CS
 				e.printStackTrace();
+				throw new FileDataChanged(e.getChunkName(), e.getSliceNum());
 			}
 		}
 	}
@@ -87,33 +88,42 @@ public class Chunk implements Serializable
 		return storedFileName;
 	}
 	
-	private boolean isFileDataUnChanged(String content)
+	private int isFileDataUnChanged(String content)
 	{
 		ArrayList<String> newSha1Values = calculateWholeSHA1(content);
 		ArrayList<String> oldSha1Values = chunkMetadata.getSha1Values();
 		
-		if(content.length() != chunkMetadata.getRealDatalength() || newSha1Values == null || oldSha1Values == null || 
-				newSha1Values.size() != oldSha1Values.size())
-			return false;
+		//if(content.length() != chunkMetadata.getRealDatalength() || newSha1Values == null || oldSha1Values == null || 
+		//		newSha1Values.size() != oldSha1Values.size())
+		//	return 0;
 		
-		for(int i=0;i<oldSha1Values.size();i++)
+		int len = Math.min(newSha1Values.size(), oldSha1Values.size());
+		int i=0;
+		for(i=0;i<len;i++)
 		{
 			String oldS = oldSha1Values.get(i);
 			String newS = newSha1Values.get(i);
 			
 			if(oldS.equals(newS) == false)
-				return false;
+				return i;
 		}
 		
-		return true;
+		if(i != oldSha1Values.size())
+			return i;
+		if(i < newSha1Values.size())
+			return i;
+		
+		return -1;
 	}
 	
 	public void retrieveRealDataFromDisk() throws FileDataChanged
 	{
 		String fullFilePath = storedFileName;
 		String content = readFile(fullFilePath);
-		if(isFileDataUnChanged(content) == false)
-			throw new FileDataChanged();
+		int sliceNum;
+		
+		if((sliceNum=isFileDataUnChanged(content)) != -1)
+			throw new FileDataChanged(chunkMetadata.getChunkFileName(), sliceNum);
 		realContent = content;
 		isDataInMemory = true;
 	}

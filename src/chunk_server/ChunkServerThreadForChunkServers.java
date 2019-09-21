@@ -8,7 +8,9 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 
+import exceptions.FileDataChanged;
 import messages.ErrorMessage;
+import messages.FileDataChangedSoWait;
 import messages.FileUpload_CL_CS;
 import messages.MessageType;
 import messages.RequestFreshChunkCopy;
@@ -89,7 +91,14 @@ public class ChunkServerThreadForChunkServers extends Thread
 							chunkServerInstance.getIpAddress()));
 				else
 				{
-					chunk.prepareChunkBeforeSendingToClient();
+					try {
+						chunk.prepareChunkBeforeSendingToClient();
+					} catch (FileDataChanged e) {
+						// TODO handle mutilple cs with data change
+						System.out.println("File data is also changed here.");
+						sendReplyToChunkSever(new FileDataChangedSoWait(e.getChunkName(), e.getSliceNum(), chunkServerInstance.getIpAddress()));
+						
+					}
 					FileUpload_CL_CS fileUpload = new FileUpload_CL_CS(chunkServerInstance.getIpAddress(), chunk,
 							new ArrayList<String>());
 					sendReplyToChunkSever(fileUpload);

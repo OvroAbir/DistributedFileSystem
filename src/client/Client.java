@@ -212,10 +212,27 @@ public class Client
 		sendMessageToChunkServer(request, chunkServerAddress);
 		
 		MessageType rcvdMsg = receieveMessageFromChunkServer(chunkServerAddress);
-		if(rcvdMsg.getMessageType() != MessageType.DOWNLOAD_CHUNK_CS_CL)
+		while(rcvdMsg.getMessageType() != MessageType.DOWNLOAD_CHUNK_CS_CL)
 		{
-			System.out.println("Could not understand msg from Chunk Server " + chunkServerAddress);
-			return null;
+			if(rcvdMsg.getMessageType() == MessageType.FILE_DATA_CHANGED_SO_WAIT_CS_CL)
+			{
+				System.out.println(fileName + " (chunk "+ chunkIndex +") was corrupted in " + chunkServerAddress +". Waiting...");
+				try {
+					Thread.sleep(3000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			else if(rcvdMsg.getMessageType() == MessageType.DOWNLOAD_CHUNK_CS_CL)
+			{
+				System.out.println("Got the valid chunk for " + fileName + "(chunk " + chunkIndex + ").");
+				break;
+			}
+			else 
+			{
+				System.out.println("Could not understand msg (type " + rcvdMsg.getMessageType() + " ) from Chunk Server " + chunkServerAddress);
+				return null;
+			}
 		}
 		FileDownload_CS_CL fileDownloadMsg = (FileDownload_CS_CL) rcvdMsg;
 		String data = fileDownloadMsg.getFileChunk().getData();

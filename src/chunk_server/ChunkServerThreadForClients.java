@@ -8,13 +8,19 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
+import exceptions.FileDataChanged;
+import messages.ChunkAllLocation;
 import messages.ErrorMessage;
+import messages.FileDataChangedSoWait;
 import messages.FileDownload_CS_CL;
 import messages.FileUpload_CL_CS;
 import messages.MessageType;
 import messages.RequestChunkData_CL_CS;
+import messages.RequestFreshChunkCopy;
+import messages.RequestValidChunkLocation_CS_CL;
 import messages.SuccessMessage;
 
 public class ChunkServerThreadForClients extends Thread
@@ -72,7 +78,7 @@ public class ChunkServerThreadForClients extends Thread
 		return fileName + ChunkServer.chunkNameSeperator + chunkIndex;
 	}
 	
-	private MessageType retrieveChunk(String chunkFileName)
+	private MessageType retrieveChunk(String chunkFileName) throws FileDataChanged
 	{
 		Chunk chunk = fileHandler.retrieveFileChunk(chunkFileName);
 		if(chunk == null)
@@ -81,9 +87,8 @@ public class ChunkServerThreadForClients extends Thread
 			System.out.println(s);
 			return new ErrorMessage(s, chunkServerInstance.getIpAddress());
 		}
-		chunk.prepareChunkBeforeSendingToClient();
 		
-		// TODO handle if chunk data is compromised
+		chunk.prepareChunkBeforeSendingToClient();
 		
 		return new FileDownload_CS_CL(chunk, chunkServerIpAddress);
 	}
@@ -106,7 +111,21 @@ public class ChunkServerThreadForClients extends Thread
 		{
 			RequestChunkData_CL_CS request = (RequestChunkData_CL_CS) msg;
 			String chunkFileName = getChunkFileName(request.getFileName(), request.getChunkIndex());
-			MessageType chunkDataMsg = retrieveChunk(chunkFileName);
+			MessageType chunkDataMsg;
+			try {
+				chunkDataMsg = retrieveChunk(chunkFileName);
+			} catch (FileDataChanged e) {
+				System.out.println("Detected corrupted data for " + e.getChunkName() + " : " + e.getSliceNum());
+				FileDataChangedSoWait fileDataChangeMsg = new FileDataChangedSoWait(e.getChunkName(), e.getSliceNum(), chunkServerIpAddress);
+				
+				sendMessageToClient(fileDataChangeMsg);
+				
+				System.out.println("Told client to wait.");
+				e.printStackTrace();
+				
+				chunkDataMsg = retrieveValidChunkData(e.getChunkName(), e.getSliceNum());
+				
+			}
 			return chunkDataMsg;
 		}
 		else
@@ -116,6 +135,82 @@ public class ChunkServerThreadForClients extends Thread
 		}
 	}
 	
+	private MessageType retrieveValidChunkData(String chunkName, int sliceNum)
+	{
+		// TODO handle slicenum
+		RequestValidChunkLocation_CS_CL reqValidChunkMsg = new RequestValidChunkLocation_CS_CL(chunkName, chunkServerIpAddress);
+		chunkServerInstance.sendMessageToControlNode(reqValidChunkMsg);
+		MessageType replyFromControlNode = chunkServerInstance.receieveMessageFromControlNode();
+		
+		if(replyFromControlNode.getMessageType() != MessageType.VALID_CHUNK_LOCATIONS)
+		{
+			System.out.println("Unexpected message from Controller " + replyFromControlNode.getMessageType());
+			return replyFromControlNode;
+		}
+		
+		ArrayList<String> chunkLocations = ((ChunkAllLocation) replyFromControlNode).getOtherValidChunkLocations(chunkServerIpAddress);
+		
+		RequestFreshChunkCopy chunkRequest = new RequestFreshChunkCopy(chunkName, chunkServerIpAddress);
+		MessageType replyFromCS = null;
+		
+		for(String validChunkAddress : chunkLocations)
+		{
+			System.out.println("Requesting chunk data to " + validChunkAddress);
+			replyFromCS = sendAndGetReplyFromAnotherChunkServer(chunkRequest, validChunkAddress);
+			if(replyFromCS.getMessageType() == MessageType.VALID_CHUNK_LOCATIONS)
+			{
+				System.out.println("Found valid chunk from " + validChunkAddress);
+				break;
+			}
+		}
+		return replyFromCS;
+	}
+	
+	private MessageType sendAndGetReplyFromAnotherChunkServer(MessageType msgToSend, String toChunkServerAddress)
+	{
+		MessageType rcvdMsg = null;
+		try {
+			Socket socket = new Socket(toChunkServerAddress, ChunkServer.CHUNK_SERVER_SOCKET_PORT_FOR_CHUNK_SERVERS);
+			
+			ObjectOutputStream objectOutputStreamWithCS = new ObjectOutputStream(socket.getOutputStream());
+			ObjectInputStream objectInputStreamWithCS = new ObjectInputStream(socket.getInputStream());
+			
+			objectOutputStreamWithCS.writeObject(msgToSend);
+			objectOutputStreamWithCS.flush();
+			
+			rcvdMsg = (MessageType) objectInputStreamWithCS.readObject();
+			
+			Thread.sleep(500);
+			
+			objectOutputStreamWithCS.close();
+			objectInputStreamWithCS.close();
+			socket.close();
+			
+		} catch (IOException e) {
+			System.out.println("can not open socket with " + toChunkServerAddress);
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		return rcvdMsg;
+	}
+	
+	private void sendMessageToClient(MessageType msg)
+	{
+		try {
+			objectOutputStreamClients.writeObject(msg);
+			objectOutputStreamClients.flush();
+			Thread.sleep(100);
+		} catch (IOException e) {
+			System.out.println("Can not send message to client ");
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
 	
 	public void run()
 	{
@@ -127,9 +222,7 @@ public class ChunkServerThreadForClients extends Thread
 				inComingMsg = (MessageType) objectInputStreamClients.readObject();
 				responseMsg = processReceivedMessage(inComingMsg);
 				
-				objectOutputStreamClients.writeObject(responseMsg);
-				objectOutputStreamClients.flush();
-				Thread.sleep(100);
+				sendMessageToClient(responseMsg);
 				// TODO handle what to do with this message
 			}
 			catch (Exception  e) { // TODO EOFException?
