@@ -26,7 +26,6 @@ public class FreeChunkServerList extends MessageType
 
 	private void setFreeServers(ArrayList<ChunkServerInfo> serverInfos)
 	{
-		System.out.println("came here. free chunk server list");
 		PriorityQueue<ChunkServerInfo> pq = new PriorityQueue<ChunkServerInfo>(
 				new Comparator<ChunkServerInfo>() 
 				{

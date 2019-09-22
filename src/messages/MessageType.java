@@ -24,6 +24,7 @@ public class MessageType implements Serializable
 	public static int FILE_DATA_CHANGED_SO_WAIT_CS_CL = ++messageTypeCounter;
 	public static int REQUEST_VALID_CHUNK_LOCATION = ++messageTypeCounter;
 	public static int VALID_CHUNK_LOCATIONS = ++messageTypeCounter;
+	public static int SEND_CHUNK_COPIES_CN_CS = ++messageTypeCounter;
 	
 	
 	public MessageType(int messageType, String messageFrom) 

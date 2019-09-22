@@ -31,6 +31,7 @@ public class ChunkServer
 	
 	public static int CHUNK_SERVER_SOCKET_PORT_FOR_CLIENTS = 5050;
 	public static int CHUNK_SERVER_SOCKET_PORT_FOR_CHUNK_SERVERS = 5088;
+	public static int CHUNK_SERVER_SOCKET_PORT_FOR_CONTROL_NODE_SEND_CHUNK_MSG = 5090;
 	
 	public static String chunkNameSeperator = "_chunk";
 	public static String FILE_STORAGE_FOLDER_LOCATION = 
@@ -67,6 +68,8 @@ public class ChunkServer
 	private static int ChunkServerCounter = 0;
 	private int chunkServerID;
 	
+	private ChunkServerThreadForControllerSendMessage chunkServerThreadForControllerSendMessage;
+	
 	public ChunkServer(String ipAddress, int freeSpace) 
 	{
 		this.ipAddress = ipAddress;
@@ -97,11 +100,18 @@ public class ChunkServer
 			e.printStackTrace();
 		}
 		
+		openConnectionWithControlNodeForSendChunkMessage();
 		startHeartBeatTimer();
 		openConnectionWithClients();
 		openConnectionWithChunkServers();
 	}
 	
+	private void openConnectionWithControlNodeForSendChunkMessage() 
+	{
+		chunkServerThreadForControllerSendMessage = new ChunkServerThreadForControllerSendMessage(this);
+		chunkServerThreadForControllerSendMessage.start();
+	}
+
 	protected int getChunkServerID()
 	{
 		return chunkServerID;

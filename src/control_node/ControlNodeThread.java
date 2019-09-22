@@ -35,11 +35,14 @@ public class ControlNodeThread extends Thread
 	private int threadId;
 	private ArrayList<ChunkServerInfo> chunkServerInfos;
 	private HashMap<String, ArrayList<String>> chunkStorageInfo;
+	private HeartBeatTracker heartBeatTracker;
 	
-	public ControlNodeThread(Socket s, int threadId)
+	
+	public ControlNodeThread(Socket s, int threadId, HeartBeatTracker heartBeatTracker)
 	{
 		socket = s;
 		this.threadId = threadId;
+		this.heartBeatTracker = heartBeatTracker;
 		clientAddress = s.getInetAddress().getHostAddress() + " (" + this.threadId + ") ";
 		chunkServerInfos = ControlNode.chunkServerInfos;
 		chunkStorageInfo = ControlNode.chunkStorageInfo;
@@ -58,7 +61,7 @@ public class ControlNodeThread extends Thread
 		}
 		
 	}
-	
+		
 	public void run()
 	{
 		System.out.println("Sever Thread started for " + clientAddress);
@@ -88,7 +91,7 @@ public class ControlNodeThread extends Thread
 		
 	}
 	
-	private void sendMessage(MessageType msg)
+	protected void sendMessage(MessageType msg)
 	{
 		try {
 			objectOutputStream.writeObject(msg);
@@ -191,6 +194,11 @@ public class ControlNodeThread extends Thread
 		return new FileStoringChunkServerList(chunkServerList);
 	}
 	
+	private void updateHeartBeatTracker(String msgFrom)
+	{
+		heartBeatTracker.noteDownReportingTime(msgFrom);
+	}
+	
 	private void resolveReceivedMessage(MessageType msg)
 	{
 		if(msg.getMessageType() == MessageType.UPLOAD_FILE_REQ_CL_CN)
@@ -211,6 +219,7 @@ public class ControlNodeThread extends Thread
 			System.out.println("Received Major heartbeat from " + msg.getMessageFrom());
 			updateChunkServerInfos(msg);
 			updateChunkStorageInformation(msg);
+			updateHeartBeatTracker(msg.getMessageFrom());
 			// TODO Process the message
 		}
 		else if(msg.getMessageType() == MessageType.MINOR_HEARTBEAT_CS_CN)
@@ -218,6 +227,7 @@ public class ControlNodeThread extends Thread
 			System.out.println("Received Minor heartbeat from " + msg.getMessageFrom());
 			updateChunkServerInfos(msg);
 			updateChunkStorageInformation(msg);
+			updateHeartBeatTracker(msg.getMessageFrom());
 			printCurrentSituaton();
 			// TODO Process the message
 		}

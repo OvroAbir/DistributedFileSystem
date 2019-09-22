@@ -1,6 +1,7 @@
 package control_node;
 
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -9,6 +10,8 @@ import java.util.HashMap;
 
 import TCP.Server;
 import TCP.ServerThread;
+import chunk_server.ChunkServer;
+import messages.SendChunkCopyToAnotherChunksServer;
 
 public class ControlNode
 {
@@ -24,7 +27,10 @@ public class ControlNode
 	public static int PORT = 5000;
 	private ServerSocket serverSocket;
 	private int serverThreadCounter;
+	private HeartBeatTracker heartBeatTracker;
+	private ChunkServerDetectorThread chunkServerDetectorThread;
 	
+	private HashMap<String, ControlNodeThread> controlNodeThreadMap;
 	
 	public ControlNode()
 	{
@@ -32,7 +38,11 @@ public class ControlNode
 		chunkServerInfos = new ArrayList<ChunkServerInfo>();
 		chunkStorageInfo = new HashMap<String, ArrayList<String>>();
 		
+		heartBeatTracker = new HeartBeatTracker();
+		
 		serverThreadCounter = 0;
+		controlNodeThreadMap = new HashMap<String, ControlNodeThread>();
+		createDeadChunkServerDetectorThread();
 		startControlNode();
 	}
 	
@@ -56,8 +66,9 @@ public class ControlNode
 			try 
 			{
 				Socket socket = serverSocket.accept();
-				System.out.println("Control node accepted a connection");
-				ControlNodeThread controlNodeThread = new ControlNodeThread(socket, ++serverThreadCounter);
+				System.out.println("Control node accepted a connection from " + socket.getInetAddress().getHostAddress());
+				ControlNodeThread controlNodeThread = new ControlNodeThread(socket, ++serverThreadCounter, heartBeatTracker);
+				controlNodeThreadMap.put(socket.getInetAddress().getHostAddress(), controlNodeThread);
 				controlNodeThread.start();
 			}
 			catch (IOException e) 
@@ -66,6 +77,45 @@ public class ControlNode
 				e.printStackTrace();
 			}
 			
+		}
+		
+	}
+	
+	private void createDeadChunkServerDetectorThread()
+	{
+		chunkServerDetectorThread = new ChunkServerDetectorThread(this);
+		chunkServerDetectorThread.start();
+	}
+
+	protected HeartBeatTracker getHeartBeatTracker() {
+		return heartBeatTracker;
+	}
+	
+	protected void sendMessagesToChunkServers(ArrayList<SendChunkCopyToAnotherChunksServer> msgs)
+	{
+		for(SendChunkCopyToAnotherChunksServer msg : msgs)
+		{
+			sendChunkCopyMessageToChunkServer(msg);
+		}
+	}
+	
+	private void sendChunkCopyMessageToChunkServer(SendChunkCopyToAnotherChunksServer msg)
+	{
+		try {
+			Socket socket = new Socket(msg.getSendFrom(), ChunkServer.CHUNK_SERVER_SOCKET_PORT_FOR_CONTROL_NODE_SEND_CHUNK_MSG);
+			ObjectOutputStream objectOutputStreamWithCS = new ObjectOutputStream(socket.getOutputStream());
+			objectOutputStreamWithCS.writeObject(msg);
+			objectOutputStreamWithCS.flush();
+			
+			Thread.sleep(500);
+			
+			objectOutputStreamWithCS.close();
+			socket.close();
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 		
 	}
