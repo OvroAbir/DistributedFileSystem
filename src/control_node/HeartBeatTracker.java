@@ -11,7 +11,7 @@ public class HeartBeatTracker
 	private List<String> ipAdresses;
 	private List<Long> lastResponse;
 	
-	public static int CHUNK_SERVER_NOT_DEAD_UNTILL_SEC = ChunkServer.MINOR_HEART_BEAT_INTERVAL * 2 + 5;
+	public static int CHUNK_SERVER_NOT_DEAD_UNTILL_SEC = (ChunkServer.MINOR_HEART_BEAT_INTERVAL /* * 2*/) / 1000 + 5;
 	
 	public HeartBeatTracker() 
 	{

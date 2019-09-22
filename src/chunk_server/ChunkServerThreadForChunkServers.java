@@ -74,6 +74,9 @@ public class ChunkServerThreadForChunkServers extends Thread
 			if(inComingMsg.getMessageType() == MessageType.UPLOAD_FILE_CL_CS)
 			{
 				FileUpload_CL_CS fileUploadMsg = (FileUpload_CL_CS) inComingMsg;
+
+				//System.out.println("***Got a message to sotre " + fileUploadMsg.getFileChunk().getChunkMetadata().getChunkFileName());
+				//System.out.println(fileUploadMsg.getFileChunk().getData().length());
 				fileUploadMsg.removeFirstElementFromChunkServerList();
 				
 				Chunk chunk = fileUploadMsg.getFileChunk();

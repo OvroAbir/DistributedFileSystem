@@ -2,6 +2,7 @@ package control_node;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import chunk_server.ChunkServer;
@@ -25,9 +26,12 @@ public class ChunkServerDetectorThread extends Thread {
 		{
 			System.out.println("Checking if some ChunkServers are down...");
 			ArrayList<String> deadCSs = heartBeatTracker.getDeadChunkServersAddresses();
-			System.out.println("Found some chunk servers down : " + deadCSs);
-			removeDeadChunkServerFromChunkInfos(deadCSs);
-			makeAnotherCopiesOfDataNodes();
+			System.out.println("Down chunk servers : " + deadCSs);
+			if(deadCSs.isEmpty() == false)
+			{
+				removeDeadChunkServerFromChunkInfos(deadCSs);
+				makeAnotherCopiesOfDataNodes();
+			}
 			try {
 				sleep(ChunkServer.MINOR_HEART_BEAT_INTERVAL);
 			} catch (InterruptedException e) {
@@ -58,15 +62,19 @@ public class ChunkServerDetectorThread extends Thread {
 			}
 		}
 		
-		for(ChunkServerInfo csi : ControlNode.chunkServerInfos)
+		for(Iterator<ChunkServerInfo> it=ControlNode.chunkServerInfos.iterator();
+				it.hasNext();)
 		{
+			ChunkServerInfo csi = it.next();
 			if(deadCSs.contains(csi.getIp_adress()))
-				ControlNode.chunkServerInfos.remove(csi);
+				it.remove();
 		}
+		
 	}
 	
 	private void makeAnotherCopiesOfDataNodes()
 	{
+		System.out.println("Trying to make copies of chunk which has low replication level.");
 		ArrayList<SendChunkCopyToAnotherChunksServer> messagesToSend = new ArrayList<SendChunkCopyToAnotherChunksServer>();
 		
 		for(Map.Entry mapElement : ControlNode.chunkStorageInfo.entrySet())
@@ -80,6 +88,12 @@ public class ChunkServerDetectorThread extends Thread {
 			if(chunkServers.size() >= ControlNode.REPLICATION_LEVEL || chunkServers.size() == 0)
 				continue;
 			
+			for(String chunkServer : chunkServers) // removing duplicates
+			{
+				if(freeChunkServerList.contains(chunkServer))
+					freeChunkServerList.remove(chunkServer);
+			}
+			
 			int needMoreCS = ControlNode.REPLICATION_LEVEL - chunkServers.size();
 			for(int i=0;i<needMoreCS && freeChunkServerList.isEmpty() == false;i++)
 			{
@@ -91,6 +105,9 @@ public class ChunkServerDetectorThread extends Thread {
 				messagesToSend.add(sendMessage);
 			}
 		}
+		
+		System.out.println("Messages to send " + messagesToSend);
+		
 		sendMessagesToChunkServers(messagesToSend);
 	}
 	
