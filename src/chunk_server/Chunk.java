@@ -7,6 +7,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -72,10 +74,7 @@ public class Chunk implements Serializable
 		if(isDataInMemory == false)
 			return storedFileName;
 		
-		System.out.println("Storing file " + storedFileName);
-		
 		File file = new File(storedFileName);
-		
 		
 		PrintWriter pw = null;
 		try {
@@ -128,6 +127,42 @@ public class Chunk implements Serializable
 			return i;
 		
 		return -1;
+	}
+	
+	public void changeStoredFile(String storedFileName, String newContent)
+	{
+		try {
+			Files.deleteIfExists(Paths.get(storedFileName));
+		} catch (IOException e) {
+			System.out.println("Could not delete file " + storedFileName);
+			e.printStackTrace();
+		}
+		realContent = newContent;
+		
+		
+		File file = new File(storedFileName);
+		
+		PrintWriter pw = null;
+		try {
+			if(file.getParentFile().exists() == false)
+				file.getParentFile().mkdirs();
+			
+			if(file.exists() == false)
+				file.createNewFile();
+			
+			pw = new PrintWriter(file);
+			pw.write(realContent);
+		} catch (FileNotFoundException e) {
+			System.out.println("Could not create file");
+			e.printStackTrace();
+		} catch (IOException e) {
+			System.out.println("Could not create file");
+			e.printStackTrace();
+		}
+		pw.close();
+		
+		isDataInMemory = false;
+		realContent = null;
 	}
 	
 	public void retrieveRealDataFromDisk() throws FileDataChanged

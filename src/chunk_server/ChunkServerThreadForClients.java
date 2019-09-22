@@ -125,6 +125,7 @@ public class ChunkServerThreadForClients extends Thread
 				
 				chunkDataMsg = retrieveValidChunkData(e.getChunkName(), e.getSliceNum());
 				// TODO replace the corrupted chunk
+				repairCorruptedChunk(((FileDownload_CS_CL)chunkDataMsg).getFileChunk(), e.getChunkName());
 				System.out.println("Got valid chunk data for " + e.getChunkName());
 			}
 			return chunkDataMsg;
@@ -134,6 +135,11 @@ public class ChunkServerThreadForClients extends Thread
 			System.out.println("Could not understand the message from " + clientAddress);
 			return new ErrorMessage("Could not understand the type of message", chunkServerIpAddress);
 		}
+	}
+	
+	private void repairCorruptedChunk(Chunk chunk, String chunkName)
+	{
+		fileHandler.replaceChunk(chunkName, chunk);
 	}
 	
 	private MessageType retrieveValidChunkData(String chunkName, int sliceNum)

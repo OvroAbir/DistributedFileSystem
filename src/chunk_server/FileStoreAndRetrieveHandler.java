@@ -1,5 +1,6 @@
 package chunk_server;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -36,5 +37,14 @@ public class FileStoreAndRetrieveHandler
 		if(hashMap.containsKey(chunkName))
 			chunk = hashMap.get(chunkName);
 		return chunk;
+	}
+	
+	public void replaceChunk(String chunkName, Chunk newChunk)
+	{
+		Chunk oldChunk = hashMap.get(chunkName);
+		String fullFilePath = chunkServerInstance.getChunkServerSpecificFileStorageLocation() 
+				+ File.separator + chunkName;
+		oldChunk.changeStoredFile(fullFilePath, newChunk.getData());
+		System.out.println("Replaced data of chunk " + chunkName);
 	}
 }
