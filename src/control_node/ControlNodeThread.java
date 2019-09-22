@@ -7,7 +7,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 import chunk_server.ChunkMetadata;
@@ -275,6 +277,27 @@ public class ControlNodeThread extends Thread
 		return (int) Math.ceil((fileSize / (double)ControlNode.CHUNK_SIZE_BYTES));
 	}
 	
+	private void printHashamap()
+	{
+		ArrayList<String> chunkNames = new ArrayList<String>();
+		for(Map.Entry mapElement : ControlNode.chunkStorageInfo.entrySet())
+		{
+			String chunkName = (String) mapElement.getKey();
+			chunkNames.add(chunkName);
+		}
+		Collections.sort(chunkNames);
+		
+		for(String chunkName : chunkNames)
+		{
+			System.out.print(chunkName + " => ");
+			ArrayList<String> ips = ControlNode.chunkStorageInfo.get(chunkName);
+			Collections.sort(ips);
+			for(String ip : ips)
+				System.out.print(ip + " ");
+			System.out.println();
+		}
+	}
+	
 	private void printCurrentSituaton()
 	{
 		System.out.println("---------------------------------\n"
@@ -284,7 +307,8 @@ public class ControlNodeThread extends Thread
 		System.out.println();
 		
 		System.out.println("Chunk Infos");
-		System.out.println(chunkStorageInfo);
+		//System.out.println(chunkStorageInfo);
+		printHashamap();
 		System.out.println("---------------------------------\n");
 	}
 	
