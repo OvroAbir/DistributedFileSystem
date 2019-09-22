@@ -2,25 +2,27 @@ package control_node;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+
 import chunk_server.ChunkServer;
 
 public class HeartBeatTracker
 {
-	private ArrayList<String> ipAdresses;
-	private ArrayList<Long> lastResponse;
+	private List<String> ipAdresses;
+	private List<Long> lastResponse;
 	
 	public static int CHUNK_SERVER_NOT_DEAD_UNTILL_SEC = ChunkServer.MINOR_HEART_BEAT_INTERVAL * 2 + 5;
 	
 	public HeartBeatTracker() 
 	{
-		ipAdresses = (ArrayList<String>) Collections.synchronizedList(new ArrayList<String>()); 
-		lastResponse = (ArrayList<Long>) Collections.synchronizedList(new ArrayList<Long>());
+		ipAdresses = Collections.synchronizedList(new ArrayList<String>()); 
+		lastResponse = Collections.synchronizedList(new ArrayList<Long>());
 	}
 	
 	private double elapsedTimeSeconds(long prevTime)
 	{
 		long currentTime = System.currentTimeMillis();
-		return (currentTime - prevTime) / 1000.0;
+		return ((currentTime - prevTime) / 1000.0);
 	}
 	
 	protected void addNewChunkServerToTrack(String ip)
@@ -34,6 +36,7 @@ public class HeartBeatTracker
 	private boolean isDead(int index)
 	{
 		double elapsedTime = elapsedTimeSeconds(lastResponse.get(index));
+		System.out.println(ipAdresses.get(index) + " :: " + elapsedTime +"s");
 		if(elapsedTime > CHUNK_SERVER_NOT_DEAD_UNTILL_SEC)
 			return true;
 		return false;

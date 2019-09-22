@@ -7,6 +7,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -284,7 +285,7 @@ public class ControlNodeThread extends Thread
 		System.out.println();
 		
 		System.out.println("Chunk Infos");
-		System.out.println(chunkStorageInfo);
+		System.out.println(Arrays.toString(chunkStorageInfo.entrySet().toArray()));
 		System.out.println("---------------------------------\n");
 	}
 	
