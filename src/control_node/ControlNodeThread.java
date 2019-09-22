@@ -12,6 +12,7 @@ import java.util.Random;
 
 import chunk_server.ChunkMetadata;
 import chunk_server.ChunkServer;
+import messages.ChunkAllLocation;
 import messages.ErrorMessage;
 import messages.FileStoringChunkServerList;
 import messages.FileUploadRequest_CL_CN;
@@ -21,6 +22,7 @@ import messages.MajorHeartBeat;
 import messages.MessageType;
 import messages.MinorHeartBeat;
 import messages.RequestFileLocation_CL_CN;
+import messages.RequestValidChunkLocation_CS_CL;
 
 public class ControlNodeThread extends Thread
 {
@@ -218,6 +220,16 @@ public class ControlNodeThread extends Thread
 			updateChunkStorageInformation(msg);
 			printCurrentSituaton();
 			// TODO Process the message
+		}
+		else if(msg.getMessageType() == MessageType.REQUEST_VALID_CHUNK_LOCATION)
+		{
+			System.out.println("Received valid chunk location request from " + msg.getMessageFrom());
+			String chunkName = ((RequestValidChunkLocation_CS_CL)msg).getChunkName();
+			ArrayList<String> csList = chunkStorageInfo.get(chunkName);
+			csList.remove(socket.getInetAddress().getHostAddress());
+			ChunkAllLocation allChunkLocations = new ChunkAllLocation(csList, ControlNode.IP_ADDRESS);
+			sendMessage(allChunkLocations);
+			System.out.println("Sent valid chunk locations to " + msg.getMessageFrom());
 		}
 		else
 		{

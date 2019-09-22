@@ -7,7 +7,7 @@ public class ChunkAllLocation extends MessageType {
 	ArrayList<String> chunkLocations;
 	public ChunkAllLocation(ArrayList<String> chunkLocations, String messageFrom) {
 		super(VALID_CHUNK_LOCATIONS, messageFrom);
-		chunkLocations = chunkLocations;
+		this.chunkLocations = chunkLocations;
 	}
 
 	public ArrayList<String> getOtherValidChunkLocations(String selfIpAddress)

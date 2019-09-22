@@ -122,10 +122,10 @@ public class ChunkServerThreadForClients extends Thread
 				sendMessageToClient(fileDataChangeMsg);
 				
 				System.out.println("Told client to wait.");
-				e.printStackTrace();
 				
 				chunkDataMsg = retrieveValidChunkData(e.getChunkName(), e.getSliceNum());
-				
+				// TODO replace the corrupted chunk
+				System.out.println("Got valid chunk data for " + e.getChunkName());
 			}
 			return chunkDataMsg;
 		}
@@ -151,12 +151,14 @@ public class ChunkServerThreadForClients extends Thread
 		
 		ArrayList<String> chunkLocations = ((ChunkAllLocation) replyFromControlNode).getOtherValidChunkLocations(chunkServerIpAddress);
 		
+		System.out.println("Got valid chunk locations from control node.");
+		
 		RequestFreshChunkCopy chunkRequest = new RequestFreshChunkCopy(chunkName, chunkServerIpAddress);
 		MessageType replyFromCS = null;
 		
 		for(String validChunkAddress : chunkLocations)
 		{
-			System.out.println("Requesting chunk data to " + validChunkAddress);
+			System.out.println("Requesting fresh chunk data to " + validChunkAddress);
 			replyFromCS = sendAndGetReplyFromAnotherChunkServer(chunkRequest, validChunkAddress);
 			if(replyFromCS.getMessageType() == MessageType.VALID_CHUNK_LOCATIONS)
 			{
@@ -164,7 +166,10 @@ public class ChunkServerThreadForClients extends Thread
 				break;
 			}
 		}
-		return replyFromCS;
+		
+		FileUpload_CL_CS chunkMsgFromCS = (FileUpload_CL_CS)replyFromCS;
+		
+		return new FileDownload_CS_CL(chunkMsgFromCS.getFileChunk(), chunkServerIpAddress);
 	}
 	
 	private MessageType sendAndGetReplyFromAnotherChunkServer(MessageType msgToSend, String toChunkServerAddress)

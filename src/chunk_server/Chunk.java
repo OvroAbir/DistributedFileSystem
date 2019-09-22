@@ -140,6 +140,8 @@ public class Chunk implements Serializable
 			throw new FileDataChanged(chunkMetadata.getChunkFileName(), sliceNum);
 		realContent = content;
 		isDataInMemory = true;
+		
+		System.out.println("Retrieved chunk data from disk.");
 	}
 	
 	private ArrayList<String> calculateWholeSHA1(String fileContent)

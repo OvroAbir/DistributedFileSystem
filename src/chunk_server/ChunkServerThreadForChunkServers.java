@@ -92,10 +92,13 @@ public class ChunkServerThreadForChunkServers extends Thread
 			else if(inComingMsg.getMessageType() == MessageType.REQUEST_FRESH_CHUNK_COPY_CS_CS)
 			{
 				String reqChunkName = ((RequestFreshChunkCopy)inComingMsg).getChunkName();
+				System.out.println("Accepted fresh chunk copy request for " + reqChunkName);
 				Chunk chunk = fileHandler.retrieveFileChunk(reqChunkName);
-				if(chunk == null)
+				if(chunk == null) {
+					System.out.println("Could not find fresh chunk copy of " + reqChunkName);
 					sendReplyToChunkSever(new ErrorMessage("Chunk " + reqChunkName +" is not stored in me.",
 							chunkServerInstance.getIpAddress()));
+				}
 				else
 				{
 					try {
@@ -113,7 +116,7 @@ public class ChunkServerThreadForChunkServers extends Thread
 				}
 				
 			}
-			// TODO for receive req to rplace corrupted chunk in another cs
+			// TODO for receive req to replace corrupted chunk in another cs
 			
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block

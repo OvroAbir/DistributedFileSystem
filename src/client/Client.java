@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -221,6 +222,7 @@ public class Client
 	private String getAChunkFromChunkServer(String fileName, int chunkIndex, String chunkServerAddress)
 	{
 		MessageType request = new RequestChunkData_CL_CS(fileName, chunkIndex, ipAddress);
+		System.out.println("Requesting chunk " + fileName + ":" + chunkIndex + " from " + chunkServerAddress );
 		sendMessageToChunkServer(request, chunkServerAddress);
 		
 		MessageType rcvdMsg = receieveMessageFromChunkServer(chunkServerAddress);
@@ -234,6 +236,12 @@ public class Client
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
+				rcvdMsg = receieveMessageFromChunkServer(chunkServerAddress);
+				if(rcvdMsg.getMessageType() == MessageType.DOWNLOAD_CHUNK_CS_CL)
+				{
+					System.out.println("Got the valid chunk for " + fileName + "(chunk " + chunkIndex + ") from " + rcvdMsg.getMessageFrom());
+					break;
+				}
 			}
 			else if(rcvdMsg.getMessageType() == MessageType.DOWNLOAD_CHUNK_CS_CL)
 			{
@@ -246,6 +254,7 @@ public class Client
 				return null;
 			}
 		}
+		
 		FileDownload_CS_CL fileDownloadMsg = (FileDownload_CS_CL) rcvdMsg;
 		String data = fileDownloadMsg.getFileChunk().getData();
 		
@@ -361,7 +370,12 @@ public class Client
 		MessageType rcvdMsg = null;
 		try {
 			rcvdMsg = (MessageType) objectInputStreamWithChunkServer.readObject();
-		} catch (UnknownHostException e) {
+		}
+		catch(EOFException e){
+			System.out.println("Got EOF exception.");
+			e.printStackTrace();
+		}
+		catch (UnknownHostException e) {
 			System.out.println("Can not connect with Chunk Server " + chunkServerAddress);
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -370,6 +384,9 @@ public class Client
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
+		
+		if(rcvdMsg == null)
+			System.out.println("Received message is null");
 		
 		if(rcvdMsg.getMessageType() == MessageType.ERROR_MESSAGE)
 			System.out.println(((ErrorMessage)rcvdMsg).getErrorMessage());
