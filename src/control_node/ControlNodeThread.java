@@ -7,7 +7,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
+<<<<<<< HEAD
 import java.util.Collections;
+=======
+import java.util.Arrays;
+>>>>>>> 99e84054d097156fc5b5e7e0d16cf3a323d5099e
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -309,6 +313,7 @@ public class ControlNodeThread extends Thread
 		System.out.println("Chunk Infos");
 		//System.out.println(chunkStorageInfo);
 		printHashamap();
+
 		System.out.println("---------------------------------\n");
 	}
 	
