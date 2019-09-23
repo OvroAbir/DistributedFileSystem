@@ -1,0 +1,23 @@
+Erasure coding scheme is better than Replication scheme overall.
+Pros of Replication scheme :
+- Less computation needed.
+- As less computation needed, it is faster to download a file (without considering network bandwith)
+Cons of Replication scheme :
+- More disk space needed in chunk server side.
+- Bigger network traffic between chunk servers.
+
+Pros of Erasure coding :
+- Less memory needed in Chunk server side.
+Cons of Erasure Coding :
+- Computationally expensive than Replication scheme.
+
+If download frequency is laarge for a file, then it is good to follow replication scheme, as it requires less computation.
+If we want to save space in Server side and download frequency is low then Erasure coding is good.
+
+If we want to compare memory usage, 
+Let's say a file size is 64KB.
+Replication level is 3.
+For erasure coding, K = 6 and m = 3.
+
+In case of replication scheme 64*3 = 192KB memory will be nneded in total.
+In case of Erasure coding scheme (64/6)*(6+3) = 96KB memory will be needed in total.
