@@ -34,12 +34,6 @@ public class ChunkServerInfo
 		this.freeSpace = freeSpace;
 	}
 	
-	public void decreaseFreeSpace(int bytes)
-	{
-		this.freeSpace -= bytes;
-		freeSpace = Integer.max(freeSpace, 0);
-	}
-	
 	public boolean hasSpace(int forTheseBytes)
 	{
 		return freeSpace >= forTheseBytes;

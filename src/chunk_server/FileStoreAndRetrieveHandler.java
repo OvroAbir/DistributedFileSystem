@@ -28,6 +28,7 @@ public class FileStoreAndRetrieveHandler
 		allChunks.add(chunk);
 		newlyAddedChunks.add(chunk);
 		System.out.println("Stored Chunk " + chunk.getChunkMetadata().getChunkFileName());
+		chunkServerInstance.reduceFreeSpace(chunk.getTotalLength());
 		return true;
 	}
 	

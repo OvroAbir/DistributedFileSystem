@@ -48,7 +48,7 @@ public class FreeChunkServerList extends MessageType
 			if(csi.hasSpace(ControlNode.CHUNK_SIZE_BYTES))
 			{
 				chunkServerList.add(csi.getIp_adress());
-				csi.decreaseFreeSpace(ControlNode.CHUNK_SIZE_BYTES);
+				//csi.decreaseFreeSpace(ControlNode.CHUNK_SIZE_BYTES);
 				count++;
 			}
 			else
