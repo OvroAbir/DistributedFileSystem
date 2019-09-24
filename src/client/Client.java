@@ -14,7 +14,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Scanner;
 
 import ReedSolomonEntity.ReedSolomonHelper;
@@ -219,7 +221,7 @@ public class Client
 	private String getAChunkFromChunkServer(String fileName, int shardIndex, String chunkServerAddress)
 	{
 		MessageType request = new RequestChunkData_CL_CS(fileName, shardIndex, ipAddress);
-		System.out.println("Requesting chunk " + fileName + ":" + shardIndex + " from " + chunkServerAddress );
+		System.out.println("Requesting chunk " + fileName + "_" + shardIndex + " from " + chunkServerAddress );
 		sendMessageToChunkServer(request, chunkServerAddress);
 		
 		MessageType rcvdMsg = receieveMessageFromChunkServer(chunkServerAddress);
@@ -329,6 +331,7 @@ public class Client
 				ArrayList<String> freeChunkServerList = getFreeChunkServerListFromController(content.length());
 				
 				ArrayList<Chunk> chunks = ReedSolomonHelper.getEncodedChunks(currentFullFileName, content, chunkIndex);
+				
 				for(Chunk chunk : chunks)
 				{
 					if(freeChunkServerList.isEmpty())
@@ -336,11 +339,13 @@ public class Client
 					ArrayList<String> forwardingList = new ArrayList<String>();
 					
 					String chunkServerToSend = freeChunkServerList.get(0);
+					freeChunkServerList.remove(0);
 					
 					forwardingList.add(chunkServerToSend);
 					FileUpload_CL_CS fileUploadMsg = new FileUpload_CL_CS(ipAddress, chunk, forwardingList);
 					
 					openConnectionWithChunkServer(chunkServerToSend);
+					System.out.println("Uploading " + chunk.getChunkMetadata().getChunkFileName());
 					sendMessageToChunkServer(fileUploadMsg, chunkServerToSend);
 					closeConnectionWithChunkServer();
 				}

@@ -1,6 +1,7 @@
 package ReedSolomonEntity;
 
 import java.io.Serializable;
+import java.util.Base64;
 
 public class Shard implements Serializable
 {
@@ -30,7 +31,7 @@ public class Shard implements Serializable
 	
 	public String toString()
 	{
-		return realShards.toString() + SHARD_SEPERATOR + shardIndex;
+		return Base64.getEncoder().encodeToString(realShards) + SHARD_SEPERATOR + shardIndex;
 	}
 	
 	public static Shard getShardObjectFromString(String content)
@@ -38,6 +39,6 @@ public class Shard implements Serializable
 		int seperatorIndex = content.lastIndexOf(SHARD_SEPERATOR);
 		String data = content.substring(0, seperatorIndex);
 		int index = Integer.parseInt(content.substring(seperatorIndex + 1));
-		return new Shard(data.getBytes(), index);
+		return new Shard(Base64.getDecoder().decode(data), index);
 	}
 }

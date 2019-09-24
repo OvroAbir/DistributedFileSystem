@@ -28,7 +28,7 @@ public class ControlNode
 	
 	
 	public static String IP_ADDRESS = (System.getProperty("os.name").startsWith("Windows") ? 
-			"127.0.0.1" : "129.82.44.80"); // TODO Update Server address before running
+			"127.0.0.1" : "129.82.45.205"); // TODO Update Server address before running
 	public static int PORT = 5000;
 	private ServerSocket serverSocket;
 	private int serverThreadCounter;
