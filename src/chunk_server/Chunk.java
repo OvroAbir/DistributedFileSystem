@@ -13,6 +13,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
+import ReedSolomonEntity.Shard;
 import exceptions.FileDataChanged;
 
 public class Chunk implements Serializable
@@ -25,12 +26,21 @@ public class Chunk implements Serializable
 	
 	public static int SHA1_INPUT_LEN = 8 * 1024;
 	
-	public Chunk(String mainFileName, String realContent, int index) 
+//	public Chunk(String mainFileName, String realContent, int index) 
+//	{
+//		this.realContent = realContent;
+//		
+//		ArrayList<String> sha1Values = calculateWholeSHA1(realContent);
+//		chunkMetadata = new ChunkMetadata(mainFileName, index, sha1Values, realContent.length());
+//		this.isDataInMemory = true;
+//	}
+	
+	public Chunk(String mainFileName, Shard shard, int fileFragmentIndex, int shardIndex)
 	{
-		this.realContent = realContent;
-		
+		this.realContent = shard.toString();
+
 		ArrayList<String> sha1Values = calculateWholeSHA1(realContent);
-		chunkMetadata = new ChunkMetadata(mainFileName, index, sha1Values, realContent.length());
+		chunkMetadata = new ChunkMetadata(mainFileName, fileFragmentIndex, shardIndex, sha1Values, realContent.length());
 		this.isDataInMemory = true;
 	}
 
@@ -217,7 +227,7 @@ public class Chunk implements Serializable
 			br = new BufferedReader(new FileReader(file));
 			String tempStr;
 			
-			while ((result = br.read()) != -1) // TODO change if there is no new line 
+			while ((result = br.read()) != -1)
 			{
 				ch = (char) result;
 				stringBuilder.append(ch);

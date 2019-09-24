@@ -6,15 +6,16 @@ import java.util.ArrayList;
 public class ChunkMetadata implements Serializable
 {
 	private String mainFileName;
-	private int realDatalength, chunkIndex, version;
+	private int realDatalength, chunkIndex, version, shardIndex;
 	private ArrayList<String> sha1Values;
 	
 	// TODO do version work
 		
-	public ChunkMetadata(String mainFileName, int index, ArrayList<String> sha1Values, int realDataLength) 
+	public ChunkMetadata(String mainFileName, int chunkIndex, int shardIndex, ArrayList<String> sha1Values, int realDataLength) 
 	{
 		this.mainFileName = mainFileName;
-		this.chunkIndex = index;
+		this.chunkIndex = chunkIndex;
+		this.shardIndex = shardIndex;
 		this.sha1Values = sha1Values;
 		this.realDatalength = realDataLength;
 	}
@@ -41,6 +42,7 @@ public class ChunkMetadata implements Serializable
 	
 	public String getChunkFileName()
 	{
-		return getMainFileName() + ChunkServer.chunkNameSeperator + getChunkIndex();
+		return getMainFileName() + ChunkServer.chunkNameSeperator + getChunkIndex() + ChunkServer.shardIndexSeperator
+				+ shardIndex;
 	}
 }

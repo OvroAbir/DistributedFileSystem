@@ -42,7 +42,7 @@ public class FreeChunkServerList extends MessageType
 			pq.add(csi);
 		
 		int count = 0;
-		while(count < ControlNode.REPLICATION_LEVEL && pq.size() > 0)
+		while(count < ControlNode.DATA_SHARDS && pq.size() > 0)
 		{
 			ChunkServerInfo csi = pq.poll();
 			if(csi.hasSpace(ControlNode.CHUNK_SIZE_BYTES))
@@ -58,7 +58,7 @@ public class FreeChunkServerList extends MessageType
 			}
 		}
 		
-		if(count != ControlNode.REPLICATION_LEVEL)
+		if(count != ControlNode.DATA_SHARDS)
 			System.out.println("Only " + count + " replicas were possible to save in chunk server.");
 	
 	}

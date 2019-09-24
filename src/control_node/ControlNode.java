@@ -15,7 +15,12 @@ import messages.SendChunkCopyToAnotherChunksServer;
 
 public class ControlNode
 {
-	public static int CHUNK_SIZE_BYTES = 64 * 1024; // TODO May need to change this
+	public static final int DATA_SHARDS = 4; // TODO change this befroe submission
+	public static final int PARITY_SHARDS = 2;
+	public static final int TOTAL_SHARDS = DATA_SHARDS + PARITY_SHARDS;
+	public static final int BYTES_IN_INT = 4;
+	
+	public static int CHUNK_SIZE_BYTES = (int) Math.ceil(64 * 1024 / (double)DATA_SHARDS); // TODO May need to change this
 	public static int REPLICATION_LEVEL = 3;
 	protected static ArrayList<ChunkServerInfo> chunkServerInfos;
 	protected static HashMap<String, ArrayList<String>> chunkStorageInfo; // chunkname to ipadress
@@ -29,6 +34,7 @@ public class ControlNode
 	private int serverThreadCounter;
 	private HeartBeatTracker heartBeatTracker;
 	private ChunkServerDetectorThread chunkServerDetectorThread;
+
 	
 	private HashMap<String, ControlNodeThread> controlNodeThreadMap;
 	

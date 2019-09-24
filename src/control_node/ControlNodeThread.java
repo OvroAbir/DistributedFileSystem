@@ -182,9 +182,9 @@ public class ControlNodeThread extends Thread
 		ArrayList<String> chunkServerList = new ArrayList<String>();
 		Random random = new Random();
 		
-		for(int chunk = 0;;chunk++)
+		for(int shardIndex = 0;shardIndex<ControlNode.DATA_SHARDS;shardIndex++)
 		{
-			String chunkName = fileName + ChunkServer.chunkNameSeperator + chunk;
+			String chunkName = fileName + ChunkServer.shardIndexSeperator + shardIndex;
 			if(chunkStorageInfo.containsKey(chunkName) == false)
 				break;
 			ArrayList<String> csList = chunkStorageInfo.get(chunkName);

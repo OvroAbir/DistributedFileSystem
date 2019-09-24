@@ -17,6 +17,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
+import ReedSolomonEntity.ReedSolomonHelper;
 import TCP.UtilityMethods;
 import chunk_server.Chunk;
 import chunk_server.ChunkServer;
@@ -162,9 +163,9 @@ public class Client
 		}
 	}
 	
-	private ArrayList<String> getStoringChunkServerListFromController(String fileName)
+	private ArrayList<String> getStoringChunkServerListFromController(String fileName, int chunkIndex)
 	{
-		MessageType askControlNode = new RequestFileLocation_CL_CN(fileName, ipAddress);
+		MessageType askControlNode = new RequestFileLocation_CL_CN(fileName, chunkIndex, ipAddress);
 		sendMessageToControllerNode(askControlNode);
 		FileStoringChunkServerList chunkServerListMsg = null;
 		
@@ -181,11 +182,6 @@ public class Client
 		}
 		
 		ArrayList<String> chunkServerlist = chunkServerListMsg.getChunkServerList();
-		if(chunkServerlist == null || chunkServerlist.isEmpty())
-		{
-			System.out.println("Could not find chunk server list. Empty response from control node.");
-			return null;
-		}
 		
 		return chunkServerlist;
 	}
@@ -301,7 +297,7 @@ public class Client
 			int result = 1, charRead;
 			char ch;
 			
-			while (result != -1) // TODO change if there is no new line 
+			while (result != -1)
 			{
 				tempStringBuilder = new StringBuilder();
 				charRead = 0;
@@ -318,29 +314,24 @@ public class Client
 				
 				content = tempStringBuilder.toString();
 				
-				FileUploadRequest_CL_CN fileUploadReqMsg = new FileUploadRequest_CL_CN(content.length(), ipAddress);
-				sendMessageToControllerNode(fileUploadReqMsg);
+				ArrayList<String> freeChunkServerList = getFreeChunkServerListFromController(content.length());
 				
-				msgType = (MessageType) objectInputStreamWithControlNode.readObject();
-				FreeChunkServerList freeChunkServerListMsg = null;
-				
-				if(msgType instanceof FreeChunkServerList)
-					freeChunkServerListMsg = (FreeChunkServerList) msgType;
-				else
+				ArrayList<Chunk> chunks = ReedSolomonHelper.getEncodedChunks(currentFullFileName, content, chunkIndex);
+				for(Chunk chunk : chunks)
 				{
-					System.out.println("FreeChunkServerList not received. Unexpected message received");
-					continue;
+					if(freeChunkServerList.isEmpty())
+						freeChunkServerList = getFreeChunkServerListFromController(content.length());
+					ArrayList<String> forwardingList = new ArrayList<String>();
+					
+					String chunkServerToSend = freeChunkServerList.get(0);
+					
+					forwardingList.add(chunkServerToSend);
+					FileUpload_CL_CS fileUploadMsg = new FileUpload_CL_CS(ipAddress, chunk, forwardingList);
+					
+					openConnectionWithChunkServer(chunkServerToSend);
+					sendMessageToChunkServer(fileUploadMsg, chunkServerToSend);
+					closeConnectionWithChunkServer();
 				}
-				ArrayList<String> freeChunkServerList = freeChunkServerListMsg.getFreeChunkServerList();
-				
-				Chunk chunk = new Chunk(currentFullFileName, content, chunkIndex);
-				
-				FileUpload_CL_CS fileUploadMsg = new FileUpload_CL_CS(ipAddress, chunk, freeChunkServerList);
-				
-				chunkServerAddress = freeChunkServerList.get(0);
-				openConnectionWithChunkServer(chunkServerAddress);
-				sendMessageToChunkServer(fileUploadMsg, chunkServerAddress);
-				closeConnectionWithChunkServer();
 				
 				content = null;
 				chunkIndex++;
@@ -353,10 +344,6 @@ public class Client
 			errorOccured = true;
 			System.out.println("Could not read the file " + currentFullFileName);
 			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			errorOccured = true;
-			System.out.println("Can not cast messagetype");
-			e.printStackTrace();
 		}
 		
 		if(errorOccured == false)
@@ -365,6 +352,31 @@ public class Client
 			System.out.println("There were some error uploading the file.");
 	}
 	
+	private ArrayList<String> getFreeChunkServerListFromController(int contentLength)
+	{
+		FileUploadRequest_CL_CN fileUploadReqMsg = new FileUploadRequest_CL_CN(contentLength, ipAddress);
+		sendMessageToControllerNode(fileUploadReqMsg);
+		
+		MessageType msgType;
+		try {
+			msgType = (MessageType) objectInputStreamWithControlNode.readObject();
+			FreeChunkServerList freeChunkServerListMsg = null;
+			
+			if(msgType instanceof FreeChunkServerList)
+				freeChunkServerListMsg = (FreeChunkServerList) msgType;
+			else
+			{
+				System.out.println("FreeChunkServerList not received. Unexpected message received");
+				return new ArrayList<String>();
+			}
+			ArrayList<String> freeChunkServerList = freeChunkServerListMsg.getFreeChunkServerList();
+			return freeChunkServerList;
+		} catch (ClassNotFoundException | IOException e) {
+			e.printStackTrace();
+		}
+		
+		return new ArrayList<String>();
+	}
 	private MessageType receieveMessageFromChunkServer(String chunkServerAddress)
 	{
 		MessageType rcvdMsg = null;

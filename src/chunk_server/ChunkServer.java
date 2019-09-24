@@ -34,6 +34,7 @@ public class ChunkServer
 	public static int CHUNK_SERVER_SOCKET_PORT_FOR_CONTROL_NODE_SEND_CHUNK_MSG = 5090;
 	
 	public static String chunkNameSeperator = "_chunk";
+	public static String shardIndexSeperator = "_";
 	public static String FILE_STORAGE_FOLDER_LOCATION = 
 			(System.getProperty("os.name").startsWith("Windows") ? "C:\\TempProjectData" : 
 				//"/s/chopin/a/grad/joyghosh/Documents/tmp") ;
