@@ -20,7 +20,6 @@ public class ReedSolomonHelper {
 		for(int i=0;i<shardsAra.length;i++)
 		{
 			Shard shard = new Shard(shardsAra[i], i);
-			System.out.println("shard len " + shardsAra[i].length);
 			shardObjects.add(shard);
 		}
 		return shardObjects;
@@ -28,7 +27,6 @@ public class ReedSolomonHelper {
 	
 	public static ArrayList<Shard> encode(String fragment)
 	{
-		System.out.println("Starting new encode");
 		int fileSize = fragment.length();
 		int storedSize = fileSize + ControlNode.BYTES_IN_INT;
 		int shardSize = (storedSize + ControlNode.DATA_SHARDS - 1) / ControlNode.DATA_SHARDS;
@@ -87,16 +85,15 @@ public class ReedSolomonHelper {
 	
 	public static String decode(ArrayList<Shard> shardObjects)
 	{
-		System.out.println("Decoding a new shard");
 		if(shardObjects == null || shardObjects.size() < ControlNode.DATA_SHARDS)
 		{
 			System.out.println("Number of shards is lower than " + ControlNode.DATA_SHARDS);
+			System.out.println("Got only " + shardObjects.size() + " shards");
 			return "Not enough shards";
 		}
 		int shardLen = -1;
 		for(int i=0;i<shardObjects.size();i++)
 		{
-			System.out.println("decoding shard length " + shardObjects.get(i).getShardLength());
 			if(shardLen == -1)
 				shardLen = shardObjects.get(i).getShardLength();
 			else if(shardLen != shardObjects.get(i).getShardLength())

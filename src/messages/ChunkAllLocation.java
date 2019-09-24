@@ -4,15 +4,15 @@ import java.util.ArrayList;
 
 public class ChunkAllLocation extends MessageType {
 
-	ArrayList<String> chunkLocations;
+	ArrayList<String> chunkLocationsAndShardName;
 	public ChunkAllLocation(ArrayList<String> chunkLocations, String messageFrom) {
 		super(VALID_CHUNK_LOCATIONS, messageFrom);
-		this.chunkLocations = chunkLocations;
+		this.chunkLocationsAndShardName = chunkLocations;
 	}
 
-	public ArrayList<String> getOtherValidChunkLocations(String selfIpAddress)
+	public ArrayList<String> getOtherValidChunkLocationsAndFileName(String selfIpAddress)
 	{
-		ArrayList<String> copiedList = new ArrayList<String>(chunkLocations);
+		ArrayList<String> copiedList = new ArrayList<String>(chunkLocationsAndShardName);
 		for(int i=0;i<copiedList.size();i++)
 		{
 			if(copiedList.get(i).equals(selfIpAddress)) {

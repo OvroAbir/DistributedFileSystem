@@ -345,11 +345,11 @@ public class Client
 					FileUpload_CL_CS fileUploadMsg = new FileUpload_CL_CS(ipAddress, chunk, forwardingList);
 					
 					openConnectionWithChunkServer(chunkServerToSend);
-					System.out.println("Uploading " + chunk.getChunkMetadata().getChunkFileName());
+
 					sendMessageToChunkServer(fileUploadMsg, chunkServerToSend);
 					closeConnectionWithChunkServer();
 				}
-				
+				System.out.println("Uploaded chunk " + chunkIndex);
 				content = null;
 				chunkIndex++;
 			}

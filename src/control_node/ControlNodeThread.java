@@ -238,9 +238,10 @@ public class ControlNodeThread extends Thread
 		{
 			System.out.println("Received valid chunk location request from " + msg.getMessageFrom());
 			String chunkName = ((RequestValidChunkLocation_CS_CL)msg).getChunkName();
-			ArrayList<String> csList = chunkStorageInfo.get(chunkName);
-			csList.remove(socket.getInetAddress().getHostAddress());
-			ChunkAllLocation allChunkLocations = new ChunkAllLocation(csList, ControlNode.IP_ADDRESS);
+			//ArrayList<String> csList = chunkStorageInfo.get(chunkName);
+			ArrayList<String> csListWithFileName = findValidChunkServers(chunkName, socket.getInetAddress().getHostAddress());
+			//csList.remove(socket.getInetAddress().getHostAddress());
+			ChunkAllLocation allChunkLocations = new ChunkAllLocation(csListWithFileName, ControlNode.IP_ADDRESS);
 			sendMessage(allChunkLocations);
 			System.out.println("Sent valid chunk locations to " + msg.getMessageFrom());
 		}
@@ -251,6 +252,30 @@ public class ControlNodeThread extends Thread
 		}
 	}
 	
+	private ArrayList<String> findValidChunkServers(String chunkName, String msgFrom)
+	{
+		System.out.println("Finding valid Chunk server for " + chunkName);
+		ArrayList<String> csList = new ArrayList<String>();
+		int sherdCount = 0;
+		for(int shard=0;shard<ControlNode.TOTAL_SHARDS;shard++)
+		{
+			String fileName = chunkName + ChunkServer.shardIndexSeperator + shard;
+			ArrayList<String> serverList = chunkStorageInfo.get(fileName);
+			if(serverList == null)
+				continue;
+			String server = serverList.get(0);
+			if(server.equalsIgnoreCase(msgFrom))
+				continue;
+			
+			server = server + ChunkServer.shardIndexSeperator + fileName;
+			csList.add(server);
+			sherdCount++;
+			if(sherdCount >= ControlNode.DATA_SHARDS)
+				break;
+		}
+		
+		return csList;
+	}
 	
 	private MessageType findFreeChunkServers(int fileSize)
 	{

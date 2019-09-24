@@ -177,6 +177,8 @@ public class Chunk implements Serializable
 	
 	public void retrieveRealDataFromDisk() throws FileDataChanged
 	{
+		System.out.println("--- Retrieving data from disk for " + getChunkMetadata().getChunkFileName());
+		
 		String fullFilePath = storedFileName;
 		String content = readFile(fullFilePath);
 		int sliceNum;

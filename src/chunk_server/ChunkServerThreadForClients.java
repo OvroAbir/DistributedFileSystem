@@ -11,6 +11,9 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
+import ReedSolomonEntity.ReedSolomonHelper;
+import ReedSolomonEntity.Shard;
+import erasure.ReedSolomon;
 import exceptions.FileDataChanged;
 import messages.ChunkAllLocation;
 import messages.ErrorMessage;
@@ -123,7 +126,7 @@ public class ChunkServerThreadForClients extends Thread
 				
 				System.out.println("Told client to wait.");
 				
-				chunkDataMsg = retrieveValidChunkData(e.getChunkName(), e.getSliceNum());
+				chunkDataMsg = retrieveValidChunkData(e.getChunkName(), e.getSliceNum(), request.getShardIndex());
 				// TODO replace the corrupted chunk
 				repairCorruptedChunk(((FileDownload_CS_CL)chunkDataMsg).getFileChunk(), e.getChunkName());
 				System.out.println("Got valid chunk data for " + e.getChunkName());
@@ -142,10 +145,13 @@ public class ChunkServerThreadForClients extends Thread
 		fileHandler.replaceChunk(chunkName, chunk);
 	}
 	
-	private MessageType retrieveValidChunkData(String chunkName, int sliceNum)
+	private MessageType retrieveValidChunkData(String chunkName, int sliceNum, int shardIndex)
 	{
 		// TODO handle slicenum
-		RequestValidChunkLocation_CS_CL reqValidChunkMsg = new RequestValidChunkLocation_CS_CL(chunkName, chunkServerIpAddress);
+		System.out.println("ChunkServerThreadForClients.retrieveValidChunkData()");
+		System.out.println("Got chunk name " + chunkName);
+		RequestValidChunkLocation_CS_CL reqValidChunkMsg = new RequestValidChunkLocation_CS_CL(chunkName.substring(0, chunkName.lastIndexOf(ChunkServer.shardIndexSeperator)),
+				chunkServerIpAddress);
 		chunkServerInstance.sendMessageToControlNode(reqValidChunkMsg);
 		MessageType replyFromControlNode = chunkServerInstance.receieveMessageFromControlNode();
 		
@@ -155,27 +161,50 @@ public class ChunkServerThreadForClients extends Thread
 			return replyFromControlNode;
 		}
 		
-		ArrayList<String> chunkLocations = ((ChunkAllLocation) replyFromControlNode).getOtherValidChunkLocations(chunkServerIpAddress);
+		ArrayList<String> chunkLocations = ((ChunkAllLocation) replyFromControlNode).getOtherValidChunkLocationsAndFileName(chunkServerIpAddress);
 		
-		System.out.println("Got valid chunk locations from control node.");
+		System.out.println("Got valid chunk locations from control node. " + chunkLocations);
 		
-		RequestFreshChunkCopy chunkRequest = new RequestFreshChunkCopy(chunkName, chunkServerIpAddress);
+		RequestFreshChunkCopy chunkRequest;
 		MessageType replyFromCS = null;
 		
-		for(String validChunkAddress : chunkLocations)
+		ArrayList<Shard> retrievedShards = new ArrayList<>();
+		
+		for(String validChunkAddressAndFileName : chunkLocations)
 		{
-			System.out.println("Requesting fresh chunk data to " + validChunkAddress);
-			replyFromCS = sendAndGetReplyFromAnotherChunkServer(chunkRequest, validChunkAddress);
+			int sepIndex = validChunkAddressAndFileName.indexOf(ChunkServer.shardIndexSeperator);
+			String address = validChunkAddressAndFileName.substring(0, sepIndex);
+			String cName = validChunkAddressAndFileName.substring(sepIndex + 1);
+			
+			chunkRequest = makeRequestForValidChunk(validChunkAddressAndFileName);
+			replyFromCS = sendAndGetReplyFromAnotherChunkServer(chunkRequest, address);
 			if(replyFromCS.getMessageType() == MessageType.VALID_CHUNK_LOCATIONS)
 			{
-				System.out.println("Found valid chunk from " + validChunkAddress);
-				break;
+				System.out.println("Found valid chunk from " + validChunkAddressAndFileName);
+				String shardData = ((FileUpload_CL_CS)replyFromCS).getFileChunk().getData();
+				Shard shard = Shard.getShardObjectFromString(shardData);
+				retrievedShards.add(shard);
 			}
 		}
 		
-		FileUpload_CL_CS chunkMsgFromCS = (FileUpload_CL_CS)replyFromCS;
+		String realContent = ReedSolomonHelper.decode(retrievedShards);
 		
-		return new FileDownload_CS_CL(chunkMsgFromCS.getFileChunk(), chunkServerIpAddress);
+		return new FileDownload_CS_CL(new Chunk(chunkName, Shard.getShardObjectFromString(realContent), getFragmentIndexFromChunkName(chunkName), shardIndex), chunkServerIpAddress);
+	}
+	
+	private int getFragmentIndexFromChunkName(String name)
+	{
+		int idx = name.lastIndexOf(ChunkServer.chunkNameSeperator);
+		return Integer.parseInt(name.substring(idx + 1));
+	}
+	
+	private RequestFreshChunkCopy makeRequestForValidChunk(String addressAndFileName)
+	{
+		int sepIndex = addressAndFileName.indexOf(ChunkServer.shardIndexSeperator);
+		String address = addressAndFileName.substring(0, sepIndex);
+		String chunkName = addressAndFileName.substring(sepIndex + 1);
+		System.out.println("Requesting " + address + " for " + chunkName);
+		return new RequestFreshChunkCopy(chunkName, address);
 	}
 	
 	private MessageType sendAndGetReplyFromAnotherChunkServer(MessageType msgToSend, String toChunkServerAddress)
