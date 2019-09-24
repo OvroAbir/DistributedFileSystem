@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 import ReedSolomonEntity.ReedSolomonHelper;
+import ReedSolomonEntity.Shard;
 import TCP.UtilityMethods;
 import chunk_server.Chunk;
 import chunk_server.ChunkServer;
@@ -215,10 +216,10 @@ public class Client
 		return file.getAbsolutePath();
 	}
 	
-	private String getAChunkFromChunkServer(String fileName, int chunkIndex, String chunkServerAddress)
+	private String getAChunkFromChunkServer(String fileName, int shardIndex, String chunkServerAddress)
 	{
-		MessageType request = new RequestChunkData_CL_CS(fileName, chunkIndex, ipAddress);
-		System.out.println("Requesting chunk " + fileName + ":" + chunkIndex + " from " + chunkServerAddress );
+		MessageType request = new RequestChunkData_CL_CS(fileName, shardIndex, ipAddress);
+		System.out.println("Requesting chunk " + fileName + ":" + shardIndex + " from " + chunkServerAddress );
 		sendMessageToChunkServer(request, chunkServerAddress);
 		
 		MessageType rcvdMsg = receieveMessageFromChunkServer(chunkServerAddress);
@@ -226,7 +227,7 @@ public class Client
 		{
 			if(rcvdMsg.getMessageType() == MessageType.FILE_DATA_CHANGED_SO_WAIT_CS_CL)
 			{
-				System.out.println(fileName + " (chunk "+ chunkIndex +") was corrupted in " + chunkServerAddress +". Waiting...");
+				System.out.println(fileName + " (shard "+ shardIndex +") was corrupted in " + chunkServerAddress +". Waiting...");
 				try {
 					Thread.sleep(3000);
 				} catch (InterruptedException e) {
@@ -235,13 +236,13 @@ public class Client
 				rcvdMsg = receieveMessageFromChunkServer(chunkServerAddress);
 				if(rcvdMsg.getMessageType() == MessageType.DOWNLOAD_CHUNK_CS_CL)
 				{
-					System.out.println("Got the valid chunk for " + fileName + "(chunk " + chunkIndex + ") from " + rcvdMsg.getMessageFrom());
+					System.out.println("Got the valid chunk for " + fileName + "(shard " + shardIndex + ") from " + rcvdMsg.getMessageFrom());
 					break;
 				}
 			}
 			else if(rcvdMsg.getMessageType() == MessageType.DOWNLOAD_CHUNK_CS_CL)
 			{
-				System.out.println("Got the valid chunk for " + fileName + "(chunk " + chunkIndex + ").");
+				System.out.println("Got the valid chunk for " + fileName + "(shard " + shardIndex + ").");
 				break;
 			}
 			else 
@@ -259,21 +260,32 @@ public class Client
 	private String downloadAFullFile()
 	{
 		String fileName = currentFullFileName;
-		ArrayList<String> chunkServerList = getStoringChunkServerListFromController(fileName);
-		if(chunkServerList == null)
-			return null;
-		
+		String chunkFileName;
+
 		String filePath = concatFilePath(DEFAULT_FILE_DOWNLOAD_LOCATION, fileName);
 		String absPath = filePath;
 		
 		
-		for(int chunk=0;chunk<chunkServerList.size();chunk++)
+		for(int chunkIndex=0;;chunkIndex++) 
 		{
-			String chunkServerAddress = chunkServerList.get(chunk);
-			openConnectionWithChunkServer(chunkServerAddress);
-			String chunkData = getAChunkFromChunkServer(fileName, chunk, chunkServerAddress);
+			ArrayList<String> chunkServerList = getStoringChunkServerListFromController(fileName, chunkIndex);
+			if(chunkServerList == null)
+				return null;
+			if(chunkServerList.isEmpty())
+				break;
+			chunkFileName = fileName + ChunkServer.chunkNameSeperator + chunkIndex;
+			ArrayList<Shard> shards = new ArrayList<Shard>();
+			for(int shard=0;shard<chunkServerList.size();shard++)
+			{
+				String chunkServerAddress = chunkServerList.get(shard);
+				openConnectionWithChunkServer(chunkServerAddress);
+				String shardData = getAChunkFromChunkServer(chunkFileName, shard, chunkServerAddress);
+				Shard shardObject = Shard.getShardObjectFromString(shardData);
+				shards.add(shardObject);
+				closeConnectionWithChunkServer();
+			}
+			String chunkData = ReedSolomonHelper.decode(shards);
 			absPath = appendDataToFile(filePath, chunkData);
-			closeConnectionWithChunkServer();
 		}
 		
 		return absPath;

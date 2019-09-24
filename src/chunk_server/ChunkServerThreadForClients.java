@@ -74,9 +74,9 @@ public class ChunkServerThreadForClients extends Thread
 		// TODO implement this
 	}
 	
-	private String getChunkFileName(String fileName, int chunkIndex)
+	private String getChunkFileWithShardName(String fileName, int shardIndex)
 	{
-		return fileName + ChunkServer.chunkNameSeperator + chunkIndex;
+		return fileName + ChunkServer.shardIndexSeperator + shardIndex;
 	}
 	
 	private MessageType retrieveChunk(String chunkFileName) throws FileDataChanged
@@ -111,7 +111,7 @@ public class ChunkServerThreadForClients extends Thread
 		else if(msg.getMessageType() == MessageType.REQUEST_CHUNK_DATA_TO_CHUNK_SERVER)
 		{
 			RequestChunkData_CL_CS request = (RequestChunkData_CL_CS) msg;
-			String chunkFileName = getChunkFileName(request.getFileName(), request.getChunkIndex());
+			String chunkFileName = getChunkFileWithShardName(request.getFileName(), request.getShardIndex());
 			MessageType chunkDataMsg;
 			try {
 				chunkDataMsg = retrieveChunk(chunkFileName);
