@@ -15,8 +15,8 @@ import messages.SendChunkCopyToAnotherChunksServer;
 
 public class ControlNode
 {
-	public static final int DATA_SHARDS = 4; // TODO change this befroe submission
-	public static final int PARITY_SHARDS = 2;
+	public static final int DATA_SHARDS = 6; // TODO change this befroe submission
+	public static final int PARITY_SHARDS = 3;
 	public static final int TOTAL_SHARDS = DATA_SHARDS + PARITY_SHARDS;
 	public static final int BYTES_IN_INT = 4;
 	
