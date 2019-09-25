@@ -178,7 +178,7 @@ public class ChunkServerThreadForClients extends Thread
 			
 			chunkRequest = makeRequestForValidChunk(validChunkAddressAndFileName);
 			replyFromCS = sendAndGetReplyFromAnotherChunkServer(chunkRequest, address);
-			if(replyFromCS.getMessageType() == MessageType.VALID_CHUNK_LOCATIONS)
+			if(replyFromCS.getMessageType() != MessageType.FILE_DATA_CHANGED_SO_WAIT_CS_CL)
 			{
 				System.out.println("Found valid chunk from " + validChunkAddressAndFileName);
 				String shardData = ((FileUpload_CL_CS)replyFromCS).getFileChunk().getData();
@@ -188,14 +188,32 @@ public class ChunkServerThreadForClients extends Thread
 		}
 		
 		String realContent = ReedSolomonHelper.decode(retrievedShards);
+		//System.out.println("Go the real content :" + realContent);
 		
-		return new FileDownload_CS_CL(new Chunk(chunkName, Shard.getShardObjectFromString(realContent), getFragmentIndexFromChunkName(chunkName), shardIndex), chunkServerIpAddress);
-	}
+		ArrayList<Shard> validShards = ReedSolomonHelper.encode(realContent);
+		
+		String mainFileName = chunkName.substring(0, chunkName.indexOf(ChunkServer.chunkNameSeperator));
+		
+		return new FileDownload_CS_CL(new Chunk(mainFileName, validShards.get(shardIndex), getFragmentIndexFromChunkName(chunkName), shardIndex), chunkServerIpAddress);
+}
 	
 	private int getFragmentIndexFromChunkName(String name)
 	{
-		int idx = name.lastIndexOf(ChunkServer.chunkNameSeperator);
-		return Integer.parseInt(name.substring(idx + 1));
+		int num = 0, dig;
+		boolean foundNum = false;
+		for(int i=0;i<name.length();i++)
+		{
+			char ch = name.charAt(i);
+			if(ch >= '0' && ch <= '9')
+			{
+				foundNum = true;
+				dig = ch - '0';
+				num = num *10+dig;
+			}
+			else if(foundNum)
+				break;
+		}
+		return num;
 	}
 	
 	private RequestFreshChunkCopy makeRequestForValidChunk(String addressAndFileName)

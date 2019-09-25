@@ -10,7 +10,11 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -111,8 +115,17 @@ public class ChunkServer
 	
 	private void clearStorageFolder()
 	{
-		System.out.println("Clearing " + FILE_STORAGE_FOLDER_LOCATION);
-		clearFilesFolder(new File(FILE_STORAGE_FOLDER_LOCATION));
+		System.out.println("Clearing " + getChunkServerSpecificFileStorageLocation());
+		//clearFilesFolder(new File(getChunkServerSpecificFileStorageLocation()));
+		try {
+			Files.walk(Paths.get(getChunkServerSpecificFileStorageLocation()))
+			.sorted(Comparator.reverseOrder())
+			.map(Path::toFile)
+			.forEach(File::delete);
+		} catch (IOException e) {
+			System.out.println("Could not delete folder");
+			//e.printStackTrace();
+		}
 	}
 	
 	private void clearFilesFolder(File folder)
@@ -120,7 +133,10 @@ public class ChunkServer
 		if(folder.exists() == false)
 			return;
 		
+		System.out.println(".... clearing now");
+		
 		File[] files = folder.listFiles();
+		System.out.println("files are " + files.length);
 		int count = files.length;
 		
 		for(int i=0;i<count;i++)

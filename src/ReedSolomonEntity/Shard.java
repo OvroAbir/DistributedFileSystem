@@ -41,4 +41,11 @@ public class Shard implements Serializable
 		int index = Integer.parseInt(content.substring(seperatorIndex + 1));
 		return new Shard(Base64.getDecoder().decode(data), index);
 	}
+	
+	public static Shard getShardObjectFromContentAndShardIndex(String content, int shardIndex)
+	{
+		return new Shard(Base64.getDecoder().decode(content), shardIndex);
+	}
+	
+	
 }
