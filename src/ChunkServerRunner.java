@@ -18,6 +18,6 @@ public class ChunkServerRunner
 	public static void main(String[] arg) throws SocketException, UnknownHostException
 	{
 		System.out.println("Starting Chunk Server");
-		ChunkServer chunkServer = new ChunkServer(getIpAdress(), 500000);
+		ChunkServer chunkServer = new ChunkServer(getIpAdress(), 5000000);
 	}
 }

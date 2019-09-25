@@ -42,7 +42,7 @@ public class ChunkServer
 		// TODO different chhunk folder for different cs
 	protected String ipAddress;
 
-	private int freeSpace; // in bytes
+	private int freeSpace, initialFreeSpace; // in bytes
 	
 	private ArrayList<Chunk> allChunks;
 	private ArrayList<Chunk> newlyAddedChunks;
@@ -73,7 +73,7 @@ public class ChunkServer
 	public ChunkServer(String ipAddress, int freeSpace) 
 	{
 		this.ipAddress = ipAddress;
-		this.freeSpace = freeSpace;
+		this.freeSpace = this.initialFreeSpace = freeSpace;
 		
 		chunkServerThreadForChunkServer = 0;
 		chunkServerID = ChunkServerCounter++;
@@ -84,6 +84,8 @@ public class ChunkServer
 		hashMapForFile = new ConcurrentHashMap<String, Chunk>();
 		
 		System.out.println("Chunk Server Storage Location : " + getChunkServerSpecificFileStorageLocation());
+		
+		clearStorageFolder();
 		
 		try {
 			socketWithControlNode = new Socket(ControlNode.IP_ADDRESS, ControlNode.PORT);
@@ -104,6 +106,30 @@ public class ChunkServer
 		startHeartBeatTimer();
 		openConnectionWithClients();
 		openConnectionWithChunkServers();
+	}
+	
+	private void clearStorageFolder()
+	{
+		System.out.println("Clearing " + FILE_STORAGE_FOLDER_LOCATION);
+		clearFilesFolder(new File(FILE_STORAGE_FOLDER_LOCATION));
+	}
+	
+	private void clearFilesFolder(File folder)
+	{
+		if(folder.exists() == false)
+			return;
+		
+		File[] files = folder.listFiles();
+		int count = files.length;
+		
+		for(int i=0;i<count;i++)
+		{
+			if(files[i].isDirectory())
+				clearFilesFolder(files[i]);
+			else
+				files[i].delete();
+		}
+		
 	}
 	
 	private void openConnectionWithControlNodeForSendChunkMessage() 
@@ -231,14 +257,14 @@ public class ChunkServer
 	
 	protected MajorHeartBeat getUpdatedMajorHeartBeat()
 	{
-		MajorHeartBeat majorHeartBeat = new MajorHeartBeat(ipAddress, freeSpace);
+		MajorHeartBeat majorHeartBeat = new MajorHeartBeat(ipAddress, initialFreeSpace - (int) getStorageFolderSize());
 		majorHeartBeat.updateHeartBeatData(extractMetadataFromChunks(allChunks));
 		return majorHeartBeat;
 	}
 	
 	protected MinorHeartBeat getUpdatedMinorHeartBeat()
 	{
-		MinorHeartBeat minorHeartBeat = new MinorHeartBeat(ipAddress, freeSpace);
+		MinorHeartBeat minorHeartBeat = new MinorHeartBeat(ipAddress, initialFreeSpace - (int) getStorageFolderSize());
 		minorHeartBeat.updateHeartBeatData(extractMetadataFromChunks(newlyAddedChunks), corruptedChunkNames);
 		return minorHeartBeat;
 	}
@@ -286,5 +312,33 @@ public class ChunkServer
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	private long getStorageFolderSize()
+	{
+		String folderName = FILE_STORAGE_FOLDER_LOCATION;
+		return getFolderSize(new File(folderName));
+	}
+	
+	private long getFolderSize(File folder)
+	{
+		long length = 0;
+		
+		if(folder.exists() == false)
+			return 0;
+		
+	    File[] files = folder.listFiles();
+	 
+	    int count = files.length;
+	 
+	    for (int i = 0; i < count; i++) {
+	        if (files[i].isFile()) {
+	            length += files[i].length();
+	        }
+	        else {
+	            length += getFolderSize(files[i]);
+	        }
+	    }
+	    return length;
 	}
 }
