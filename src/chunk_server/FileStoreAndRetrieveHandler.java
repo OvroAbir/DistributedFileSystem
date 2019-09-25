@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
+import exceptions.FileDataChanged;
+
 public class FileStoreAndRetrieveHandler 
 {
 	private ConcurrentHashMap<String, Chunk> hashMap;
@@ -37,6 +39,7 @@ public class FileStoreAndRetrieveHandler
 		Chunk chunk = null;
 		if(hashMap.containsKey(chunkName))
 			chunk = hashMap.get(chunkName);
+		
 		return chunk;
 	}
 	

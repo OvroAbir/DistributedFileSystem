@@ -113,6 +113,7 @@ public class ChunkServerThreadForClients extends Thread
 			RequestChunkData_CL_CS request = (RequestChunkData_CL_CS) msg;
 			String chunkFileName = getChunkFileName(request.getFileName(), request.getChunkIndex());
 			MessageType chunkDataMsg;
+			Chunk c = null;
 			try {
 				chunkDataMsg = retrieveChunk(chunkFileName);
 			} catch (FileDataChanged e) {
@@ -128,6 +129,7 @@ public class ChunkServerThreadForClients extends Thread
 				repairCorruptedChunk(((FileDownload_CS_CL)chunkDataMsg).getFileChunk(), e.getChunkName());
 				System.out.println("Got valid chunk data for " + e.getChunkName());
 			}
+			f(((FileDownload_CS_CL)chunkDataMsg).getFileChunk());
 			return chunkDataMsg;
 		}
 		else
@@ -135,6 +137,11 @@ public class ChunkServerThreadForClients extends Thread
 			System.out.println("Could not understand the message from " + clientAddress);
 			return new ErrorMessage("Could not understand the type of message", chunkServerIpAddress);
 		}
+	}
+	
+	private void f(Chunk chunk)
+	{
+		chunk.f_chunk(chunkServerInstance.getChunkServerSpecificFileStorageLocation());
 	}
 	
 	private void repairCorruptedChunk(Chunk chunk, String chunkName)

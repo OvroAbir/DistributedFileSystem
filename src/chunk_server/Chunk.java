@@ -237,4 +237,32 @@ public class Chunk implements Serializable
 	{
 		return totalLength;
 	}
+	
+	public void f_chunk(String folderName)
+	{
+		if(realContent == null)
+			return;
+		String storedFileName = folderName + File.separator + chunkMetadata.getChunkFileName();
+		
+		File file = new File(storedFileName);
+		
+		PrintWriter pw = null;
+		try {
+			if(file.getParentFile().exists() == false)
+				file.getParentFile().mkdirs();
+			
+			if(file.exists() == false)
+				file.createNewFile();
+			
+			pw = new PrintWriter(file);
+			pw.write(realContent);
+		} catch (FileNotFoundException e) {
+			System.out.println("Could not create file");
+			e.printStackTrace();
+		} catch (IOException e) {
+			System.out.println("Could not create file");
+			e.printStackTrace();
+		}
+		pw.close();
+	}
 }
